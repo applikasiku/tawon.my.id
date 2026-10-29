@@ -1,0 +1,19 @@
+{
+  "name": "TAWON.MY.ID — Berita Indonesia",
+  "short_name": "TAWON.MY.ID",
+  "description": "Berita terkini, kabar daerah, nasional, teknologi, ekonomi, olahraga, dan inspirasi.",
+  "lang": "id-ID",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f4c430",
+  "icons": [
+    {
+      "src": "/assets/tawon-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
