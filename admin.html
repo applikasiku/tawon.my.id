@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#facc15">
+<title>Admin TAWON.MY.ID</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4"></script>
+<style>
+:root{--yellow:#facc15;--ink:#171717;--muted:#737373;--line:#e5e5e5;--bg:#f5f5f4;--white:#fff;--green:#15803d;--red:#b91c1c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;font-weight:750}.primary{background:var(--yellow);color:#111}.dark{background:#171717;color:#fff}.light{background:#f5f5f5;border:1px solid var(--line)}.danger{color:var(--red);background:#fee2e2}.muted{color:var(--muted)}.wrap{max-width:1250px;margin:auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px;font-weight:900;font-size:22px}.bee{background:var(--yellow);border:2px solid #111;border-radius:12px;padding:7px 10px}.badge{display:inline-block;border-radius:99px;background:#fef3c7;padding:4px 9px;font-size:12px;font-weight:800}.layout{display:grid;grid-template-columns:220px 1fr;gap:18px}.side,.panel,.card{background:#fff;border:1px solid var(--line);border-radius:16px}.side{padding:12px;height:max-content;position:sticky;top:12px}.navbtn{display:block;width:100%;text-align:left;background:transparent;padding:12px;margin:3px 0}.navbtn.active,.navbtn:hover{background:#fef3c7}.main{min-width:0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.card{padding:17px}.statnum{font-size:27px;font-weight:900}.panel{padding:20px;margin-bottom:16px}.panel h2{margin:0 0 16px;font-size:21px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}.field label{font-size:13px;font-weight:800}.field input,.field textarea,.field select{width:100%;border:1px solid #d4d4d4;border-radius:10px;padding:11px;background:#fff;min-width:0}.field textarea{min-height:115px;resize:vertical}.field .short{min-height:70px}.field small{color:var(--muted)}.full{grid-column:1/-1}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.notice{padding:12px 14px;border-radius:10px;background:#fef3c7;margin:10px 0}.success{background:#dcfce7}.error{background:#fee2e2}.hidden{display:none!important}.thumb{width:100%;max-height:280px;object-fit:cover;border-radius:12px;background:#f5f5f5}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:600px}th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;text-transform:uppercase;color:var(--muted)}.status{font-size:12px;font-weight:800;border-radius:99px;padding:4px 8px;background:#eee}.status.published{background:#dcfce7;color:#166534}.status.review{background:#dbeafe;color:#1d4ed8}.login{max-width:470px;margin:7vh auto}.login .panel{padding:26px}.login h1{margin:0 0 6px}.chip{display:inline-flex;gap:7px;align-items:center;background:#f5f5f5;border:1px solid var(--line);padding:7px 9px;border-radius:9px;margin:3px}.chip button{padding:0;background:none}.editorbar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.wordcount{font-size:12px;color:var(--muted)}@media(max-width:800px){.layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow:auto;gap:5px}.navbtn{white-space:nowrap;width:auto}.stats{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}.wrap{padding:10px}.panel{padding:14px}.top{align-items:flex-start}.brand{font-size:18px}}@media(max-width:430px){.stats{grid-template-columns:1fr}.top .row{justify-content:flex-end}}
+</style>
+</head>
+<body>
+<div id="loginView" class="wrap login">
+ <div class="brand"><span class="bee">T</span><span>TAWON.MY.ID <span class="muted">Admin</span></span></div>
+ <div class="panel" style="margin-top:20px">
+  <h1 id="authTitle">Masuk ke dashboard</h1><p class="muted" id="authSubtitle">Kelola artikel, thumbnail, kategori, tag, dan SEO.</p>
+  <div id="authNotice" class="notice hidden"></div>
+  <form id="authForm">
+   <div class="field"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" required></div>
+   <div class="field"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></div>
+   <button class="primary" style="width:100%" id="authSubmit">Masuk</button>
+  </form>
+  <p class="muted" style="font-size:13px">Belum memiliki akun? <button id="toggleAuth" class="light">Daftar akun</button></p>
+  <p class="muted" style="font-size:12px">Akun baru otomatis mendapat peran author dan belum dapat menerbitkan artikel sampai admin memberikan izin.</p>
+ </div>
+</div>
+<div id="appView" class="wrap hidden">
+ <header class="top"><div class="brand"><span class="bee">T</span><span>TAWON.MY.ID <span class="muted">CMS</span></span></div><div class="row"><span id="userBadge" class="badge"></span><a href="/" style="color:#111">Lihat situs ↗</a><button id="logout" class="light">Keluar</button></div></header>
+ <div id="globalNotice" class="notice hidden"></div>
+ <div class="layout">
+  <aside class="side">
+   <button class="navbtn active" data-page="dashboard">📊 Dashboard</button>
+   <button class="navbtn" data-page="editor">✍️ Tulis artikel</button>
+   <button class="navbtn" data-page="articles">📰 Semua artikel</button>
+   <button class="navbtn" data-page="taxonomy">🏷️ Kategori & tag</button>
+  </aside>
+  <main class="main">
+   <section id="page-dashboard">
+    <div class="stats"><div class="card"><div class="muted">Total artikel</div><div id="statAll" class="statnum">—</div></div><div class="card"><div class="muted">Terbit</div><div id="statPublished" class="statnum">—</div></div><div class="card"><div class="muted">Draft</div><div id="statDraft" class="statnum">—</div></div></div>
+    <div class="panel"><div class="editorbar"><h2>Artikel terbaru</h2><button class="primary" data-go="editor">＋ Tulis artikel</button></div><div id="recentList" class="muted">Memuat…</div></div>
+    <div class="panel"><h2>Status akun</h2><div id="roleInfo">Memeriksa izin…</div></div>
+   </section>
+   <section id="page-editor" class="hidden">
+    <div class="panel">
+     <div class="editorbar"><h2 id="editorHeading">Tulis artikel baru</h2><span id="wordCount" class="wordcount">0 kata</span></div>
+     <form id="articleForm">
+      <input id="articleId" type="hidden">
+      <div class="field"><label for="title">Judul artikel *</label><input id="title" required maxlength="180" placeholder="Judul yang jelas dan menarik"></div>
+      <div class="grid">
+       <div class="field"><label for="slug">Slug URL *</label><input id="slug" required placeholder="judul-artikel"><small>Huruf kecil, angka, dan tanda hubung.</small></div>
+       <div class="field"><label for="category">Kategori *</label><select id="category" required><option value="">Pilih kategori</option></select></div>
+      </div>
+      <div class="field"><label for="excerpt">Ringkasan / excerpt</label><textarea id="excerpt" class="short" maxlength="300" placeholder="Ringkasan artikel untuk kartu berita (maks. 300 karakter)"></textarea></div>
+      <div class="field"><label for="content">Isi artikel *</label><textarea id="content" required style="min-height:340px" placeholder="Tulis artikel di sini. Pisahkan paragraf dengan baris kosong."></textarea><small>Gunakan paragraf, subjudul, kutipan, dan sumber yang jelas. Editor menyimpan teks aman; HTML mentah tidak dirender.</small></div>
+      <div class="grid">
+       <div class="field"><label for="thumbnail">Thumbnail utama</label><input id="thumbnail" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small>JPG, PNG, WebP atau AVIF; maksimal 5 MB.</small><img id="thumbPreview" class="thumb hidden" alt="Pratinjau thumbnail"><input id="thumbnailUrl" type="url" placeholder="Atau tempel URL gambar yang sudah di-host"></div>
+       <div class="field"><label for="tagInput">Tag artikel</label><input id="tagInput" placeholder="Contoh: Purbalingga, Pendidikan, UMKM"><small>Pisahkan tag dengan koma. Tag akan dibuat otomatis bila belum ada.</small><div id="tagChips"></div></div>
+      </div>
+      <div class="grid">
+       <div class="field"><label for="metaTitle">SEO title</label><input id="metaTitle" maxlength="180" placeholder="Kosongkan untuk memakai judul artikel"><small id="metaTitleCount">0/60 karakter</small></div>
+       <div class="field"><label for="metaDescription">SEO description</label><textarea id="metaDescription" class="short" maxlength="200" placeholder="Deskripsi singkat untuk mesin pencari"></textarea><small id="metaDescCount">0/160 karakter</small></div>
+       <div class="field"><label for="canonical">Canonical URL (opsional)</label><input id="canonical" type="url" placeholder="https://tawon.my.id/artikel.html?slug=..."></div>
+       <div class="field"><label for="ogImage">Open Graph image URL (opsional)</label><input id="ogImage" type="url" placeholder="Kosongkan untuk memakai thumbnail"></div>
+      </div>
+      <div class="row"><label><input type="checkbox" id="featured"> Jadikan berita unggulan</label></div>
+      <div class="actions"><button class="light" type="button" id="saveDraft">Simpan draft</button><button class="dark" type="button" id="sendReview">Kirim untuk review</button><button class="primary" type="submit" id="publishBtn">Terbitkan sekarang</button><button class="light" type="button" id="resetEditor">Artikel baru / reset</button></div>
+      <p class="muted" style="font-size:12px">Terbitkan sekarang hanya tersedia bagi admin/editor. Publikasi langsung akan membuat artikel terlihat publik jika kebijakan akun mengizinkan.</p>
+     </form>
+    </div>
+   </section>
+   <section id="page-articles" class="hidden"><div class="panel"><div class="editorbar"><h2>Semua artikel</h2><button class="primary" data-go="editor">＋ Artikel baru</button></div><div class="field"><input id="articleSearch" placeholder="Cari judul artikel…"></div><div id="articleTable" class="tablewrap">Memuat…</div></div></section>
+   <section id="page-taxonomy" class="hidden"><div class="grid">
+    <div class="panel"><h2>Kategori</h2><form id="categoryForm"><div class="field"><label>Nama kategori</label><input id="categoryName" required maxlength="70"></div><div class="field"><label>Deskripsi</label><input id="categoryDescription" maxlength="180"></div><button class="primary">Tambah kategori</button></form><div id="categoryList" style="margin-top:15px"></div></div>
+    <div class="panel"><h2>Tag</h2><form id="tagForm"><div class="field"><label>Nama tag</label><input id="tagName" required maxlength="70"></div><button class="primary">Tambah tag</button></form><div id="tagList" style="margin-top:15px"></div></div>
+   </div></section>
+  </main>
+ </div>
+</div>
+<script>
+(() => {
+const SUPABASE_URL='https://ajqwpbpaozlurqoxysjt.supabase.co';
+const SUPABASE_KEY='sb_publishable_-XnVkQ5Jgi0ji47eizdS9g_XOY2Ao48';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let user=null,profile=null,categories=[],allTags=[],articles=[],signupMode=false,editorStatus='draft',currentThumbUrl='';
+const slugify=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,160);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const notice=(msg,type='')=>{const n=$('globalNotice');n.textContent=msg;n.className='notice '+(type==='success'?'success':type==='error'?'error':'');n.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});};
+const authNotice=(msg,type='')=>{const n=$('authNotice');n.textContent=msg;n.className='notice '+(type==='error'?'error':type==='success'?'success':'');n.classList.remove('hidden');};
+function showPage(page){document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));$('page-'+page).classList.remove('hidden');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===page));if(page==='articles')renderTable();if(page==='taxonomy')renderTaxonomy();}
+document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.go);if(b.dataset.go==='editor')resetEditor();}));
+$('toggleAuth').onclick=()=>{signupMode=!signupMode;$('authTitle').textContent=signupMode?'Buat akun author':'Masuk ke dashboard';$('authSubtitle').textContent=signupMode?'Akun baru harus disetujui admin sebelum dapat menerbitkan.':'Kelola artikel, thumbnail, kategori, tag, dan SEO.';$('authSubmit').textContent=signupMode?'Daftar':'Masuk';$('toggleAuth').textContent=signupMode?'Kembali ke masuk':'Daftar akun';$('authNotice').classList.add('hidden');};
+$('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const email=$('authEmail').value.trim(),password=$('authPassword').value;let r;if(signupMode)r=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+'/admin.html'}});else r=await db.auth.signInWithPassword({email,password});if(r.error)throw r.error;if(signupMode&&!r.data.session){authNotice('Akun dibuat. Periksa email untuk verifikasi, lalu masuk. Setelah itu admin perlu mengaktifkan role editor/admin.','success');}else{await boot(r.data.session?.user||r.data.user);}}catch(err){authNotice(err.message||'Autentikasi gagal.','error');}finally{$('authSubmit').disabled=false;}};
+$('logout').onclick=async()=>{await db.auth.signOut();location.reload();};
+async function boot(u){user=u;if(!user){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden');return;}const {data:p,error}=await db.from('profiles').select('id,display_name,role,bio,avatar_url').eq('id',user.id).maybeSingle();profile=p;if(error)console.warn(error);if(!profile){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden');authNotice('Profil belum tersedia. Pastikan email sudah diverifikasi dan trigger profil aktif. Jika perlu, admin database harus menyiapkan profil untuk akun ini.','error');await db.auth.signOut();return;}
+$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userBadge').textContent=(profile.display_name||user.email)+' · '+profile.role;
+const staff=['admin','editor'].includes(profile.role);$('publishBtn').classList.toggle('hidden',!staff);$('roleInfo').innerHTML='<b>Role: '+esc(profile.role)+'</b><p class="muted">'+(staff?'Akun ini dapat mengelola dan menerbitkan artikel.':'Author hanya dapat menyimpan draft atau mengirim review. Minta admin mengubah role jika Anda perlu publikasi langsung.')+'</p>';
+await loadData();}
+async function loadData(){await Promise.all([loadCategories(),loadTags(),loadArticles()]);}
+async function loadCategories(){const {data,error}=await db.from('categories').select('id,name,slug,description,is_active').order('name');if(error){notice('Gagal memuat kategori: '+error.message,'error');return;}categories=data||[];$('category').innerHTML='<option value="">Pilih kategori</option>'+categories.filter(c=>c.is_active).map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');renderTaxonomy();}
+async function loadTags(){const {data,error}=await db.from('tags').select('id,name,slug').order('name');if(error){console.warn(error);return;}allTags=data||[];renderTaxonomy();}
+async function loadArticles(){let q=db.from('articles').select('id,title,slug,status,created_at,published_at,view_count,is_featured,category_id,thumbnail_url,excerpt').order('created_at',{ascending:false}).limit(150);const {data,error}=await q;if(error){notice('Gagal memuat artikel: '+error.message,'error');return;}articles=data||[];renderStats();renderRecent();renderTable();}
+function renderStats(){$('statAll').textContent=articles.length;$('statPublished').textContent=articles.filter(a=>a.status==='published').length;$('statDraft').textContent=articles.filter(a=>a.status!=='published').length;}
+function renderRecent(){const list=articles.slice(0,6);$('recentList').innerHTML=list.length?list.map(a=>'<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee"><div><b>'+esc(a.title)+'</b><div class="muted" style="font-size:12px">'+new Date(a.created_at).toLocaleString('id-ID')+' · '+esc(a.slug)+'</div></div><div class="row"><span class="status '+esc(a.status)+'">'+esc(a.status)+'</span><button class="light" data-edit="'+a.id+'">Edit</button></div></div>').join(''):'Belum ada artikel. Klik Tulis artikel untuk membuat yang pertama.';wireEditButtons();}
+function renderTable(){if(!$('articleTable'))return;const term=($('articleSearch')?.value||'').toLowerCase();const list=articles.filter(a=>a.title.toLowerCase().includes(term)||a.slug.toLowerCase().includes(term));$('articleTable').innerHTML=list.length?'<table><thead><tr><th>Artikel</th><th>Status</th><th>Terbit</th><th>Aksi</th></tr></thead><tbody>'+list.map(a=>'<tr><td><b>'+esc(a.title)+'</b><div class="muted" style="font-size:12px">'+esc(a.slug)+'</div></td><td><span class="status '+esc(a.status)+'">'+esc(a.status)+'</span></td><td>'+ (a.published_at?new Date(a.published_at).toLocaleDateString('id-ID'):'—')+'</td><td><div class="row"><button class="light" data-edit="'+a.id+'">Edit</button>'+(profile.role==='admin'?'<button class="danger" data-delete="'+a.id+'">Hapus</button>':'')+'</div></td></tr>').join('')+'</tbody></table>':'Tidak ada artikel yang cocok.';wireEditButtons();document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>deleteArticle(b.dataset.delete));}
+function wireEditButtons(){document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editArticle(b.dataset.edit));}
+$('articleSearch').addEventListener('input',renderTable);
+function renderTaxonomy(){$('categoryList').innerHTML=categories.map(c=>'<div class="chip">'+esc(c.name)+' <span class="muted">/'+esc(c.slug)+'</span></div>').join('')||'<p class="muted">Belum ada kategori.</p>';$('tagList').innerHTML=allTags.slice(0,100).map(t=>'<span class="chip">'+esc(t.name)+'</span>').join('')||'<p class="muted">Belum ada tag.</p>';}
+$('categoryForm').onsubmit=async e=>{e.preventDefault();if(!['admin','editor'].includes(profile.role))return notice('Hanya admin/editor dapat menambah kategori.','error');const name=$('categoryName').value.trim(),slug=slugify(name);const {error}=await db.from('categories').insert({name,slug,description:$('categoryDescription').value.trim()||null});if(error)return notice('Kategori gagal dibuat: '+error.message,'error');$('categoryForm').reset();await loadCategories();notice('Kategori berhasil ditambahkan.','success');};
+$('tagForm').onsubmit=async e=>{e.preventDefault();if(!['admin','editor'].includes(profile.role))return notice('Hanya admin/editor dapat menambah tag.','error');const name=$('tagName').value.trim();const {error}=await db.from('tags').insert({name,slug:slugify(name)});if(error)return notice('Tag gagal dibuat: '+error.message,'error');$('tagForm').reset();await loadTags();notice('Tag berhasil ditambahkan.','success');};
+$('title').addEventListener('input',()=>{if(!$('articleId').value)$('slug').value=slugify($('title').value);updateCounts();});
+$('content').addEventListener('input',()=>{$('wordCount').textContent=$('content').value.trim()?$('content').value.trim().split(/\s+/).length+' kata':'0 kata';});
+$('metaTitle').addEventListener('input',updateCounts);$('metaDescription').addEventListener('input',updateCounts);
+function updateCounts(){$('metaTitleCount').textContent=$('metaTitle').value.length+'/60 karakter';$('metaDescCount').textContent=$('metaDescription').value.length+'/160 karakter';}
+$('thumbnail').onchange=()=>{const f=$('thumbnail').files[0];if(!f){$('thumbPreview').classList.add('hidden');return;}if(f.size>5*1024*1024){notice('Ukuran gambar maksimal 5 MB.','error');$('thumbnail').value='';return;}const url=URL.createObjectURL(f);$('thumbPreview').src=url;$('thumbPreview').classList.remove('hidden');};
+$('thumbnailUrl').addEventListener('input',()=>{const u=$('thumbnailUrl').value.trim();if(u){$('thumbPreview').src=u;$('thumbPreview').classList.remove('hidden');}});
+function resetEditor(){ $('articleForm').reset();$('articleId').value='';$('editorHeading').textContent='Tulis artikel baru';$('thumbPreview').classList.add('hidden');$('thumbnailUrl').value='';currentThumbUrl='';editorStatus='draft';$('wordCount').textContent='0 kata';updateCounts(); }
+$('resetEditor').onclick=resetEditor;
+function editArticle(id){const a=articles.find(x=>x.id===id);if(!a)return;db.from('articles').select('*,article_tags(tag_id,tags(id,name,slug))').eq('id',id).single().then(({data,error})=>{if(error)return notice('Gagal membuka artikel: '+error.message,'error');if(profile.role==='author'&&data.author_id!==user.id)return notice('Anda tidak memiliki izin mengedit artikel ini.','error');$('articleId').value=data.id;$('title').value=data.title||'';$('slug').value=data.slug||'';$('category').value=data.category_id||'';$('excerpt').value=data.excerpt||'';$('content').value=data.content||'';$('thumbnailUrl').value=data.thumbnail_url||'';currentThumbUrl=data.thumbnail_url||'';$('metaTitle').value=data.meta_title||'';$('metaDescription').value=data.meta_description||'';$('canonical').value=data.canonical_url||'';$('ogImage').value=data.og_image_url||'';$('featured').checked=!!data.is_featured;$('tagInput').value=(data.article_tags||[]).map(x=>x.tags?.name).filter(Boolean).join(', ');editorStatus=data.status;$('editorHeading').textContent='Edit artikel';$('thumbPreview').classList.toggle('hidden',!currentThumbUrl);if(currentThumbUrl)$('thumbPreview').src=currentThumbUrl;$('wordCount').textContent=$('content').value.trim().split(/\s+/).filter(Boolean).length+' kata';updateCounts();showPage('editor');window.scrollTo({top:0,behavior:'smooth'});});}
+async function uploadThumbnail(){const file=$('thumbnail').files[0];if(!file)return $('thumbnailUrl').value.trim()||currentThumbUrl||null;if(!['admin','editor'].includes(profile.role))throw new Error('Hanya admin/editor dapat mengunggah thumbnail.');if(file.size>5*1024*1024)throw new Error('Ukuran thumbnail maksimal 5 MB.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');const path=new Date().toISOString().slice(0,10)+'/'+crypto.randomUUID()+'.'+ext;const {error}=await db.storage.from('article-thumbnails').upload(path,file,{contentType:file.type,upsert:false});if(error)throw error;return db.storage.from('article-thumbnails').getPublicUrl(path).data.publicUrl;}
+function parseTags(){return [...new Set($('tagInput').value.split(',').map(s=>s.trim()).filter(Boolean))].slice(0,15);}
+async function ensureTagIds(names){const ids=[];for(const name of names){const slug=slugify(name);let t=allTags.find(x=>x.slug===slug);if(!t){const {data,error}=await db.from('tags').insert({name,slug}).select('id,name,slug').single();if(error){const retry=await db.from('tags').select('id,name,slug').eq('slug',slug).maybeSingle();if(retry.error||!retry.data)throw error;t=retry.data;}else{t=data;allTags.push(t);}}ids.push(t.id);}return ids;}
+async function saveArticle(status){if(status==='published'&&!['admin','editor'].includes(profile.role))throw new Error('Role Anda tidak boleh menerbitkan langsung.');const title=$('title').value.trim(),slug=slugify($('slug').value.trim()),content=$('content').value.trim(),categoryId=$('category').value;if(!title||!slug||!content||!categoryId)throw new Error('Judul, slug, isi artikel, dan kategori wajib diisi.');$('slug').value=slug;const thumb=await uploadThumbnail();const now=new Date().toISOString();const payload={title,slug,excerpt:$('excerpt').value.trim()||null,content,thumbnail_url:thumb,category_id:categoryId,author_id:user.id,status,is_featured:$('featured').checked,meta_title:$('metaTitle').value.trim()||title,meta_description:$('metaDescription').value.trim()||$('excerpt').value.trim()||null,canonical_url:$('canonical').value.trim()||null,og_image_url:$('ogImage').value.trim()||thumb,published_at:status==='published'?(editorStatus==='published'?(articles.find(a=>a.id===$('articleId').value)?.published_at||now):now):null,updated_at:now};
+const id=$('articleId').value;let saved;if(id){let q=db.from('articles').update(payload).eq('id',id);if(profile.role==='author')q=q.eq('author_id',user.id);const r=await q.select('id').single();if(r.error)throw r.error;saved=r.data;}else{const r=await db.from('articles').insert(payload).select('id').single();if(r.error)throw r.error;saved=r.data;}
+const tagIds=await ensureTagIds(parseTags());const del=await db.from('article_tags').delete().eq('article_id',saved.id);if(del.error)throw del.error;if(tagIds.length){const links=await db.from('article_tags').insert(tagIds.map(tag_id=>({article_id:saved.id,tag_id})));if(links.error)throw links.error;}
+editorStatus=status;await loadArticles();$('articleId').value=saved.id;$('editorHeading').textContent='Edit artikel';return {id:saved.id,slug,status};}
+$('saveDraft').onclick=()=>doSave('draft');$('sendReview').onclick=()=>doSave('review');$('articleForm').onsubmit=e=>{e.preventDefault();doSave('published');};
+async function doSave(status){const btns=[$('saveDraft'),$('sendReview'),$('publishBtn')];btns.forEach(b=>b.disabled=true);try{const a=await saveArticle(status);notice(status==='published'?'Artikel berhasil diterbitkan. URL artikel: '+location.origin+'/artikel.html?slug='+encodeURIComponent(a.slug):status==='review'?'Artikel disimpan dan dikirim untuk review.':'Draft artikel berhasil disimpan.','success');if(status==='published')editorStatus='published';}catch(err){notice('Artikel belum berhasil disimpan: '+(err.message||String(err)),'error');}finally{btns.forEach(b=>b.disabled=false);}}
+async function deleteArticle(id){if(profile.role!=='admin')return notice('Hanya admin dapat menghapus artikel.','error');if(!confirm('Hapus artikel ini? Tindakan ini tidak dapat dibatalkan.'))return;const {error}=await db.from('articles').delete().eq('id',id);if(error)return notice('Gagal menghapus: '+error.message,'error');await loadArticles();notice('Artikel dihapus.','success');}
+db.auth.onAuthStateChange((_event,session)=>{if(session?.user&&!user)boot(session.user);});
+db.auth.getSession().then(({data})=>boot(data.session?.user||null));
+})();
+</script>
+</body></html>
