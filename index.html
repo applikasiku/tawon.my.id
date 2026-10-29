@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f4c430">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/tawon-logo.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TAWON.MY.ID">
+<meta property="og:title" content="TAWON.MY.ID — Berita Terkini, Cepat dan Terpercaya">
+<meta property="og:description" content="Berita terkini, kabar daerah, nasional, teknologi, ekonomi, olahraga, dan inspirasi.">
+<meta property="og:url" content="https://tawon.my.id/">
 <meta name="description" content="TAWON.MY.ID — berita terkini, kabar daerah, nasional, teknologi, ekonomi, olahraga, dan inspirasi.">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://tawon.my.id/">
@@ -38,6 +45,7 @@
 <script>
 document.getElementById('date').textContent=new Intl.DateTimeFormat('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());
 document.getElementById('searchForm').addEventListener('submit',function(e){e.preventDefault();const q=document.getElementById('searchInput').value.trim().toLocaleLowerCase('id');let visible=0;document.querySelectorAll('.searchable').forEach(el=>{const match=!q||el.innerText.toLocaleLowerCase('id').includes(q);el.style.display=match?'':'none';if(match)visible++});document.getElementById('emptyState').style.display=visible?'none':'block';});
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) { window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {})); }
 </script>
 </body>
 </html>
