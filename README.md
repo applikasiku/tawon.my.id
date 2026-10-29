@@ -4,36 +4,51 @@ Portal berita Indonesia dengan identitas visual kuning, hitam, dan putih.
 
 ## Status saat ini
 
-Tahap **V1 — fondasi frontend**:
-- Halaman depan responsif untuk ponsel dan desktop.
-- Navigasi kategori dan pencarian sisi-klien untuk konten contoh.
-- Metadata SEO dasar, canonical URL, Open Graph.
-- `robots.txt` dan sitemap awal.
-- Web App Manifest, ikon SVG, dan service worker untuk cache dasar/offline shell.
+Tahap **V2 — homepage dan halaman artikel terhubung ke Supabase**:
+- Halaman depan responsif dan PWA.
+- Beranda mengambil artikel berstatus `published` dari Supabase REST API.
+- Kategori navigasi diambil dari database.
+- Pencarian sisi-klien untuk artikel yang sudah dimuat.
+- Halaman detail `artikel.html?slug=...` memuat artikel berdasarkan slug.
+- Metadata dasar, canonical, Open Graph title, dan structured data NewsArticle pada halaman detail.
+- Service worker diperbarui untuk halaman detail artikel.
+- Database Supabase memakai RLS pada seluruh tabel aplikasi.
+
+## Database
+
+Supabase project ref: `ajqwpbpaozlurqoxysjt`
+
+Tabel:
+- `profiles`
+- `categories`
+- `articles`
+- `tags`
+- `article_tags`
+- `article_views`
+- `site_settings`
+
+Frontend memakai Supabase project URL dan publishable/anon key. Publishable key memang dirancang untuk penggunaan klien, tetapi keamanan tetap bergantung pada RLS dan kebijakan database. **Jangan pernah memasukkan service-role key, database password, atau secret API ke frontend.**
 
 ## File utama
 
-- `index.html` — halaman depan statis prototipe.
+- `index.html` — beranda yang mengambil artikel dan kategori dari Supabase.
+- `artikel.html` — detail artikel berdasarkan slug.
 - `manifest.webmanifest` — metadata PWA.
 - `sw.js` — service worker/cache shell.
-- `assets/tawon-logo.svg` — logo lebah SVG.
-- `robots.txt` — arahan crawler dan tautan sitemap.
-- `sitemap.xml` — sitemap awal; perlu diperbarui saat halaman/artikel dinamis ditambahkan.
+- `assets/tawon-logo.svg` — logo SVG.
+- `robots.txt` dan `sitemap.xml` — berkas crawler awal.
 
-## Penting
+## Batasan yang masih ada
 
-Kartu berita yang saat ini tampil adalah **konten contoh**, bukan laporan berita aktual. Jangan gunakan sebagai publikasi berita nyata tanpa menggantinya dengan artikel yang diverifikasi redaksi.
+- Dashboard CMS/login admin belum dibuat.
+- Belum ada alur aman untuk membuat akun admin dan mengatur role pertama.
+- Upload media belum terhubung ke Cloudflare R2/Supabase Storage.
+- Sitemap masih statis dan belum memuat URL artikel baru.
+- Halaman artikel memakai query-string slug; untuk SEO terbaik sebaiknya gunakan route URL bersih/server-rendered.
+- Penghitungan views belum dihubungkan dari frontend.
+- Konten akan kosong sampai artikel terbit ditambahkan ke database.
+- Belum ada konfirmasi deployment/live domain setelah commit GitHub.
 
-PWA dan sitemap baru akan bekerja penuh setelah website di-deploy dengan HTTPS di domain yang benar. Pengindeksan Google/Google News tidak dapat dijamin hanya dengan menambahkan metadata.
+## Deployment dan verifikasi
 
-## Tahap berikutnya
-
-1. Hubungkan atau pilih project Supabase khusus TAWON.MY.ID untuk database dan autentikasi admin.
-2. Buat skema artikel, kategori, penulis, status publikasi, dan Row Level Security (RLS).
-3. Bangun dashboard admin dan editor artikel.
-4. Tambahkan API publikasi aman dengan secret server-side; jangan pernah menaruh service-role key atau token rahasia di frontend.
-5. Buat halaman artikel dinamis, sitemap dinamis, structured data NewsArticle, dan alur deployment.
-
-## Deployment
-
-Pilih target deployment (misalnya Cloudflare Pages/Workers atau GitHub Pages) dan pastikan DNS domain `tawon.my.id`, HTTPS, dan konfigurasi build sesuai target tersebut.
+Pastikan hosting mengarah ke repository ini, HTTPS aktif, dan domain `tawon.my.id` sudah terhubung. Setelah deploy, uji beranda, REST API publik, halaman artikel, cache service worker, dan sitemap. Pengindeksan Google/Google News maupun persetujuan AdSense tidak dapat dijamin hanya dengan metadata.
