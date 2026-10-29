@@ -29,6 +29,21 @@
   <p class="muted" style="font-size:12px">Akun baru otomatis mendapat peran author dan belum dapat menerbitkan artikel sampai admin memberikan izin.</p>
  </div>
 </div>
+<div id="forgotView" class="wrap login hidden">
+ <div class="brand"><span class="bee">T</span><span>TAWON.MY.ID <span class="muted">Admin</span></span></div>
+ <div class="panel" style="margin-top:20px">
+  <div style="font-size:34px;margin-bottom:8px" aria-hidden="true">🔐</div>
+  <h1 style="margin-bottom:6px">Lupa kata sandi?</h1>
+  <p class="muted">Masukkan alamat email akun Anda. Kami akan mengirim tautan untuk membuat kata sandi baru.</p>
+  <div id="forgotNotice" class="notice hidden" role="status" aria-live="polite"></div>
+  <form id="forgotForm">
+   <div class="field"><label for="forgotEmail">Alamat email</label><input id="forgotEmail" type="email" autocomplete="email" placeholder="nama@contoh.com" required></div>
+   <button class="primary" id="forgotSubmit" type="submit" style="width:100%">Kirim tautan reset</button>
+  </form>
+  <button id="forgotBack" class="light" type="button" style="width:100%;margin-top:10px">← Kembali ke login</button>
+  <p class="muted" style="font-size:12px;margin:16px 0 0">Tidak menerima email? Periksa folder spam dan pastikan alamat email sudah benar.</p>
+ </div>
+</div>
 <div id="resetView" class="wrap login hidden">
  <div class="brand"><span class="bee">T</span><span>TAWON.MY.ID <span class="muted">Reset Kata Sandi</span></span></div>
  <div class="panel" style="margin-top:20px">
@@ -112,9 +127,10 @@ document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=
 $('togglePassword').onclick=()=>{const input=$('authPassword'),show=input.type==='password';input.type=show?'text':'password';$('togglePassword').textContent=show?'🙈':'👁️';$('togglePassword').setAttribute('aria-label',show?'Sembunyikan kata sandi':'Tampilkan kata sandi');$('togglePassword').setAttribute('aria-pressed',String(show));};
 $('toggleAuth').onclick=()=>{signupMode=!signupMode;$('authTitle').textContent=signupMode?'Buat akun author':'Masuk ke dashboard';$('authSubtitle').textContent=signupMode?'Akun baru harus disetujui admin sebelum dapat menerbitkan.':'Kelola artikel, thumbnail, kategori, tag, dan SEO.';$('authSubmit').textContent=signupMode?'Daftar':'Masuk';$('toggleAuth').textContent=signupMode?'Kembali ke masuk':'Daftar akun';$('authNotice').classList.add('hidden');};
 $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const email=$('authEmail').value.trim(),password=$('authPassword').value;let r;if(signupMode)r=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+'/admin.html'}});else r=await db.auth.signInWithPassword({email,password});if(r.error)throw r.error;if(signupMode&&!r.data.session){authNotice('Akun dibuat. Periksa email untuk verifikasi, lalu masuk. Setelah itu admin perlu mengaktifkan role editor/admin.','success');}else{await boot(r.data.session?.user||r.data.user);}}catch(err){authNotice(err.message||'Autentikasi gagal.','error');}finally{$('authSubmit').disabled=false;}};
-$('forgotPassword').onclick=()=>{signupMode=false;$('authTitle').textContent='Lupa kata sandi';$('authSubtitle').textContent='Kami akan mengirim tautan untuk mengatur ulang kata sandi ke email Anda.';$('authSubmit').classList.add('hidden');$('toggleAuth').classList.add('hidden');$('googleLogin').classList.add('hidden');$('authPassword').closest('.field').classList.add('hidden');$('authPassword').required=false;$('authPassword').disabled=true;$('authSubmit').textContent='Kirim tautan reset';$('forgotPassword').classList.add('hidden');$('authNotice').classList.add('hidden');$('authEmail').focus();$('authEmail').setAttribute('data-reset-mode','true');};
-$('authEmail').addEventListener('input',()=>{if($('authEmail').dataset.resetMode==='true'){}});
-$('authForm').addEventListener('submit',async e=>{if($('authEmail').dataset.resetMode!=='true')return;e.preventDefault();$('authSubmit').disabled=true;try{const email=$('authEmail').value.trim();const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/admin.html'});if(error)throw error;authNotice('Jika email terdaftar, tautan untuk mengatur ulang kata sandi akan dikirim. Periksa kotak masuk dan folder spam.','success');}catch(err){authNotice('Permintaan reset gagal: '+(err.message||String(err)),'error');}finally{$('authSubmit').disabled=false;}});
+$('forgotPassword').onclick=()=>{ $('forgotEmail').value=$('authEmail').value.trim();$('loginView').classList.add('hidden');$('forgotView').classList.remove('hidden');$('forgotEmail').focus();};
+$('forgotBack').onclick=()=>{$('forgotView').classList.add('hidden');$('loginView').classList.remove('hidden');};
+$('forgotForm').onsubmit=async e=>{e.preventDefault();const btn=$('forgotSubmit');btn.disabled=true;btn.textContent='Mengirim…';try{const email=$('forgotEmail').value.trim();const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/admin.html'});if(error)throw error;showForgotNotice('Jika email terdaftar, tautan reset telah diminta. Periksa kotak masuk dan folder spam.','success');}catch(err){showForgotNotice('Tidak dapat mengirim tautan reset: '+(err.message||String(err)),'error');}finally{btn.disabled=false;btn.textContent='Kirim tautan reset';}};
+function showForgotNotice(msg,type=''){const n=$('forgotNotice');n.textContent=msg;n.className='notice '+(type==='error'?'error':type==='success'?'success':'');n.classList.remove('hidden');}
 $('backToLogin').onclick=()=>location.href=location.pathname;
 $('resetForm').onsubmit=async e=>{e.preventDefault();const p=$('newPassword').value,confirm=$('confirmPassword').value;if(p.length<8){resetNotice('Kata sandi minimal 8 karakter.','error');return;}if(p!==confirm){resetNotice('Kedua kata sandi tidak sama.','error');return;}const btn=$('resetSubmit');btn.disabled=true;try{const {error}=await db.auth.updateUser({password:p});if(error)throw error;resetNotice('Kata sandi berhasil diperbarui. Anda dapat kembali ke halaman masuk.','success');$('resetForm').classList.add('hidden');}catch(err){resetNotice('Gagal memperbarui kata sandi. Buka kembali tautan reset terbaru dari email. '+(err.message||String(err)),'error');}finally{btn.disabled=false;}};
 function resetNotice(msg,type=''){const n=$('resetNotice');n.textContent=msg;n.className='notice '+(type==='error'?'error':type==='success'?'success':'');n.classList.remove('hidden');}
