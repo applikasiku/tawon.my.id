@@ -21,6 +21,9 @@
    <div class="field"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></div>
    <button class="primary" style="width:100%" id="authSubmit">Masuk</button>
   </form>
+  <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:#737373;font-size:12px"><span style="height:1px;background:#e5e5e5;flex:1"></span>ATAU<span style="height:1px;background:#e5e5e5;flex:1"></span></div>
+  <button id="googleLogin" class="light" style="width:100%">🔵 Lanjutkan dengan Google</button>
+  <p class="muted" style="font-size:13px">Login Google harus diaktifkan di pengaturan Supabase terlebih dahulu.</p>
   <p class="muted" style="font-size:13px">Belum memiliki akun? <button id="toggleAuth" class="light">Daftar akun</button></p>
   <p class="muted" style="font-size:12px">Akun baru otomatis mendapat peran author dan belum dapat menerbitkan artikel sampai admin memberikan izin.</p>
  </div>
@@ -93,6 +96,7 @@ document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>s
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.go);if(b.dataset.go==='editor')resetEditor();}));
 $('toggleAuth').onclick=()=>{signupMode=!signupMode;$('authTitle').textContent=signupMode?'Buat akun author':'Masuk ke dashboard';$('authSubtitle').textContent=signupMode?'Akun baru harus disetujui admin sebelum dapat menerbitkan.':'Kelola artikel, thumbnail, kategori, tag, dan SEO.';$('authSubmit').textContent=signupMode?'Daftar':'Masuk';$('toggleAuth').textContent=signupMode?'Kembali ke masuk':'Daftar akun';$('authNotice').classList.add('hidden');};
 $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const email=$('authEmail').value.trim(),password=$('authPassword').value;let r;if(signupMode)r=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+'/admin.html'}});else r=await db.auth.signInWithPassword({email,password});if(r.error)throw r.error;if(signupMode&&!r.data.session){authNotice('Akun dibuat. Periksa email untuk verifikasi, lalu masuk. Setelah itu admin perlu mengaktifkan role editor/admin.','success');}else{await boot(r.data.session?.user||r.data.user);}}catch(err){authNotice(err.message||'Autentikasi gagal.','error');}finally{$('authSubmit').disabled=false;}};
+$('googleLogin').onclick=async()=>{if(signupMode){authNotice('Kembali ke mode masuk untuk menggunakan Google.');return;}try{const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/admin.html'}});if(error)throw error;}catch(err){authNotice('Login Google belum siap: '+(err.message||String(err)),'error');}};
 $('logout').onclick=async()=>{await db.auth.signOut();location.reload();};
 async function boot(u){user=u;if(!user){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden');return;}const {data:p,error}=await db.from('profiles').select('id,display_name,role,bio,avatar_url').eq('id',user.id).maybeSingle();profile=p;if(error)console.warn(error);if(!profile){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden');authNotice('Profil belum tersedia. Pastikan email sudah diverifikasi dan trigger profil aktif. Jika perlu, admin database harus menyiapkan profil untuk akun ini.','error');await db.auth.signOut();return;}
 $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userBadge').textContent=(profile.display_name||user.email)+' · '+profile.role;
