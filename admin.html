@@ -29,6 +29,20 @@
   <p class="muted" style="font-size:12px">Akun baru otomatis mendapat peran author dan belum dapat menerbitkan artikel sampai admin memberikan izin.</p>
  </div>
 </div>
+<div id="resetView" class="wrap login hidden">
+ <div class="brand"><span class="bee">T</span><span>TAWON.MY.ID <span class="muted">Reset Kata Sandi</span></span></div>
+ <div class="panel" style="margin-top:20px">
+  <h1>Atur kata sandi baru</h1>
+  <p class="muted">Masukkan kata sandi baru untuk akun Anda.</p>
+  <div id="resetNotice" class="notice hidden" role="status" aria-live="polite"></div>
+  <form id="resetForm">
+   <div class="field"><label for="newPassword">Kata sandi baru</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" required></div>
+   <div class="field"><label for="confirmPassword">Ulangi kata sandi baru</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" required></div>
+   <button class="primary" id="resetSubmit" type="submit" style="width:100%">Simpan kata sandi baru</button>
+  </form>
+  <p><button id="backToLogin" class="light" type="button">Kembali ke halaman masuk</button></p>
+ </div>
+</div>
 <div id="appView" class="wrap hidden">
  <header class="top"><div class="brand"><span class="bee">T</span><span>TAWON.MY.ID <span class="muted">CMS</span></span></div><div class="row"><span id="userBadge" class="badge"></span><a href="/" style="color:#111">Lihat situs ↗</a><button id="logout" class="light">Keluar</button></div></header>
  <div id="globalNotice" class="notice hidden"></div>
@@ -98,7 +112,13 @@ document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=
 $('togglePassword').onclick=()=>{const input=$('authPassword'),show=input.type==='password';input.type=show?'text':'password';$('togglePassword').textContent=show?'🙈':'👁️';$('togglePassword').setAttribute('aria-label',show?'Sembunyikan kata sandi':'Tampilkan kata sandi');$('togglePassword').setAttribute('aria-pressed',String(show));};
 $('toggleAuth').onclick=()=>{signupMode=!signupMode;$('authTitle').textContent=signupMode?'Buat akun author':'Masuk ke dashboard';$('authSubtitle').textContent=signupMode?'Akun baru harus disetujui admin sebelum dapat menerbitkan.':'Kelola artikel, thumbnail, kategori, tag, dan SEO.';$('authSubmit').textContent=signupMode?'Daftar':'Masuk';$('toggleAuth').textContent=signupMode?'Kembali ke masuk':'Daftar akun';$('authNotice').classList.add('hidden');};
 $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const email=$('authEmail').value.trim(),password=$('authPassword').value;let r;if(signupMode)r=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+'/admin.html'}});else r=await db.auth.signInWithPassword({email,password});if(r.error)throw r.error;if(signupMode&&!r.data.session){authNotice('Akun dibuat. Periksa email untuk verifikasi, lalu masuk. Setelah itu admin perlu mengaktifkan role editor/admin.','success');}else{await boot(r.data.session?.user||r.data.user);}}catch(err){authNotice(err.message||'Autentikasi gagal.','error');}finally{$('authSubmit').disabled=false;}};
-$('forgotPassword').onclick=async()=>{const email=$('authEmail').value.trim();if(!email){authNotice('Masukkan email akun terlebih dahulu.');$('authEmail').focus();return;}try{const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/admin.html'});if(error)throw error;authNotice('Jika email terdaftar, tautan reset kata sandi akan dikirim. Buka email dan gunakan tautan tersebut untuk kembali ke dashboard.','success');}catch(err){authNotice('Permintaan reset gagal: '+(err.message||String(err)),'error');}};
+$('forgotPassword').onclick=()=>{signupMode=false;$('authTitle').textContent='Lupa kata sandi';$('authSubtitle').textContent='Kami akan mengirim tautan untuk mengatur ulang kata sandi ke email Anda.';$('authSubmit').classList.add('hidden');$('toggleAuth').classList.add('hidden');$('googleLogin').classList.add('hidden');$('authPassword').closest('.field').classList.add('hidden');$('forgotPassword').classList.add('hidden');$('authNotice').classList.add('hidden');$('authEmail').focus();$('authEmail').setAttribute('data-reset-mode','true');};
+$('authEmail').addEventListener('input',()=>{if($('authEmail').dataset.resetMode==='true'){}});
+$('authForm').addEventListener('submit',async e=>{if($('authEmail').dataset.resetMode!=='true')return;e.preventDefault();$('authSubmit').disabled=true;try{const email=$('authEmail').value.trim();const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/admin.html'});if(error)throw error;authNotice('Jika email terdaftar, tautan untuk mengatur ulang kata sandi akan dikirim. Periksa kotak masuk dan folder spam.','success');}catch(err){authNotice('Permintaan reset gagal: '+(err.message||String(err)),'error');}finally{$('authSubmit').disabled=false;}});
+$('backToLogin').onclick=()=>location.href=location.pathname;
+$('resetForm').onsubmit=async e=>{e.preventDefault();const p=$('newPassword').value,confirm=$('confirmPassword').value;if(p.length<8){resetNotice('Kata sandi minimal 8 karakter.','error');return;}if(p!==confirm){resetNotice('Kedua kata sandi tidak sama.','error');return;}const btn=$('resetSubmit');btn.disabled=true;try{const {error}=await db.auth.updateUser({password:p});if(error)throw error;resetNotice('Kata sandi berhasil diperbarui. Anda dapat kembali ke halaman masuk.','success');$('resetForm').classList.add('hidden');}catch(err){resetNotice('Gagal memperbarui kata sandi. Buka kembali tautan reset terbaru dari email. '+(err.message||String(err)),'error');}finally{btn.disabled=false;}};
+function resetNotice(msg,type=''){const n=$('resetNotice');n.textContent=msg;n.className='notice '+(type==='error'?'error':type==='success'?'success':'');n.classList.remove('hidden');}
+function showResetPage(){ $('loginView').classList.add('hidden');$('appView').classList.add('hidden');$('resetView').classList.remove('hidden');}
 $('googleLogin').onclick=async()=>{if(signupMode){authNotice('Kembali ke mode masuk untuk menggunakan Google.');return;}try{const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/admin.html'}});if(error)throw error;}catch(err){authNotice('Login Google belum siap: '+(err.message||String(err)),'error');}};
 $('logout').onclick=async()=>{await db.auth.signOut();location.reload();};
 async function boot(u){user=u;if(!user){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden');return;}const {data:p,error}=await db.from('profiles').select('id,display_name,role,bio,avatar_url').eq('id',user.id).maybeSingle();profile=p;if(error)console.warn(error);if(!profile){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden');authNotice('Profil belum tersedia. Pastikan email sudah diverifikasi dan trigger profil aktif. Jika perlu, admin database harus menyiapkan profil untuk akun ini.','error');await db.auth.signOut();return;}
@@ -136,8 +156,8 @@ editorStatus=status;await loadArticles();$('articleId').value=saved.id;$('editor
 $('saveDraft').onclick=()=>doSave('draft');$('sendReview').onclick=()=>doSave('review');$('articleForm').onsubmit=e=>{e.preventDefault();doSave('published');};
 async function doSave(status){const btns=[$('saveDraft'),$('sendReview'),$('publishBtn')];btns.forEach(b=>b.disabled=true);try{const a=await saveArticle(status);notice(status==='published'?'Artikel berhasil diterbitkan. URL artikel: '+location.origin+'/artikel.html?slug='+encodeURIComponent(a.slug):status==='review'?'Artikel disimpan dan dikirim untuk review.':'Draft artikel berhasil disimpan.','success');if(status==='published')editorStatus='published';}catch(err){notice('Artikel belum berhasil disimpan: '+(err.message||String(err)),'error');}finally{btns.forEach(b=>b.disabled=false);}}
 async function deleteArticle(id){if(profile.role!=='admin')return notice('Hanya admin dapat menghapus artikel.','error');if(!confirm('Hapus artikel ini? Tindakan ini tidak dapat dibatalkan.'))return;const {error}=await db.from('articles').delete().eq('id',id);if(error)return notice('Gagal menghapus: '+error.message,'error');await loadArticles();notice('Artikel dihapus.','success');}
-db.auth.onAuthStateChange((_event,session)=>{if(session?.user&&!user)boot(session.user);});
-db.auth.getSession().then(({data})=>boot(data.session?.user||null));
+db.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){showResetPage();return;}if(session?.user&&!user)boot(session.user);});
+if(location.hash.includes('type=recovery')||new URLSearchParams(location.search).get('mode')==='reset'){showResetPage();}db.auth.getSession().then(({data})=>{if(location.hash.includes('type=recovery')||new URLSearchParams(location.search).get('mode')==='reset')showResetPage();else boot(data.session?.user||null);});
 })();
 </script>
 </body></html>
