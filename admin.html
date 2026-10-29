@@ -67,6 +67,7 @@
    <button class="navbtn" data-page="editor">✍️ Tulis artikel</button>
    <button class="navbtn" data-page="articles">📰 Semua artikel</button>
    <button class="navbtn" data-page="taxonomy">🏷️ Kategori & tag</button>
+   <button class="navbtn" data-page="authors" id="authorsNav">👥 Penulis & izin</button>
   </aside>
   <main class="main">
    <section id="page-dashboard">
@@ -103,6 +104,7 @@
     </div>
    </section>
    <section id="page-articles" class="hidden"><div class="panel"><div class="editorbar"><h2>Semua artikel</h2><button class="primary" data-go="editor">＋ Artikel baru</button></div><div class="field"><input id="articleSearch" placeholder="Cari judul artikel…"></div><div id="articleTable" class="tablewrap">Memuat…</div></div></section>
+   <section id="page-authors" class="hidden"><div class="panel"><h2>Penulis & otorisasi</h2><p class="muted">Atur peran penulis. Author hanya dapat mengirim draft/review, kecuali admin mengaktifkan izin publikasi langsung.</p><div id="authorsList">Memuat…</div></div></section>
    <section id="page-taxonomy" class="hidden"><div class="grid">
     <div class="panel"><h2>Kategori</h2><form id="categoryForm"><div class="field"><label>Nama kategori</label><input id="categoryName" required maxlength="70"></div><div class="field"><label>Deskripsi</label><input id="categoryDescription" maxlength="180"></div><button class="primary">Tambah kategori</button></form><div id="categoryList" style="margin-top:15px"></div></div>
     <div class="panel"><h2>Tag</h2><form id="tagForm"><div class="field"><label>Nama tag</label><input id="tagName" required maxlength="70"></div><button class="primary">Tambah tag</button></form><div id="tagList" style="margin-top:15px"></div></div>
@@ -121,7 +123,7 @@ const slugify=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const notice=(msg,type='')=>{const n=$('globalNotice');n.textContent=msg;n.className='notice '+(type==='success'?'success':type==='error'?'error':'');n.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});};
 const authNotice=(msg,type='')=>{const n=$('authNotice');n.textContent=msg;n.className='notice '+(type==='error'?'error':type==='success'?'success':'');n.classList.remove('hidden');};
-function showPage(page){document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));$('page-'+page).classList.remove('hidden');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===page));if(page==='articles')renderTable();if(page==='taxonomy')renderTaxonomy();}
+function showPage(page){document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));$('page-'+page).classList.remove('hidden');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===page));if(page==='articles')renderTable();if(page==='taxonomy')renderTaxonomy();if(page==='authors')loadAuthors();}
 document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.go);if(b.dataset.go==='editor')resetEditor();}));
 $('togglePassword').onclick=()=>{const input=$('authPassword'),show=input.type==='password';input.type=show?'text':'password';$('togglePassword').textContent=show?'🙈':'👁️';$('togglePassword').setAttribute('aria-label',show?'Sembunyikan kata sandi':'Tampilkan kata sandi');$('togglePassword').setAttribute('aria-pressed',String(show));};
@@ -141,6 +143,14 @@ async function boot(u){user=u;if(!user){$('loginView').classList.remove('hidden'
 $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userBadge').textContent=(profile.display_name||user.email)+' · '+profile.role;
 const staff=['admin','editor'].includes(profile.role)||profile.can_publish===true;$('publishBtn').classList.toggle('hidden',!staff);$('roleInfo').innerHTML='<b>Role: '+esc(profile.role)+'</b><p class="muted">'+(staff?'Akun ini memiliki izin menerbitkan artikel.':'Author hanya dapat menyimpan draft atau mengirim review sampai admin memberikan izin publikasi.')+'</p><p class="muted">Saldo poin: '+Number(profile.points_balance||0).toLocaleString('id-ID')+' poin</p>';
 await loadData();}
+async function loadAuthors(){
+ if(profile.role!=='admin'){$('authorsList').textContent='Hanya admin yang dapat mengelola izin penulis.';return;}
+ const {data,error}=await db.from('profiles').select('id,display_name,role,can_publish,points_balance').order('display_name');
+ if(error){$('authorsList').textContent='Gagal memuat daftar penulis: '+error.message;return;}
+ $('authorsList').innerHTML='<div class="tablewrap"><table><thead><tr><th>Nama</th><th>Peran</th><th>Publikasi langsung</th><th>Saldo poin</th><th>Aksi</th></tr></thead><tbody>'+data.map(p=>'<tr data-author-row="'+p.id+'"><td>'+esc(p.display_name||'Penulis')+'</td><td><select data-role><option value="author" '+(p.role==='author'?'selected':'')+'>author</option><option value="editor" '+(p.role==='editor'?'selected':'')+'>editor</option><option value="admin" '+(p.role==='admin'?'selected':'')+'>admin</option></select></td><td><input type="checkbox" data-publish '+(p.can_publish?'checked':'')+' '+(p.role==='author'?'':'disabled')+' aria-label="Izin publikasi langsung"></td><td>'+Number(p.points_balance||0).toLocaleString('id-ID')+'</td><td><button class="primary" data-save-author>Simpan</button></td></tr>').join('')+'</tbody></table></div>';
+ $('authorsList').querySelectorAll('[data-role]').forEach(sel=>sel.onchange=()=>{const row=sel.closest('[data-author-row]');row.querySelector('[data-publish]').disabled=sel.value!=='author';});
+ $('authorsList').querySelectorAll('[data-save-author]').forEach(btn=>btn.onclick=async()=>{const row=btn.closest('[data-author-row]'),id=row.dataset.authorRow,role=row.querySelector('[data-role]').value,can_publish=role==='author'&&row.querySelector('[data-publish]').checked;btn.disabled=true;const {error}=await db.from('profiles').update({role,can_publish}).eq('id',id);btn.disabled=false;if(error)return notice('Gagal menyimpan izin: '+error.message,'error');notice('Izin penulis berhasil diperbarui.','success');loadAuthors();});
+}
 async function loadData(){await Promise.all([loadCategories(),loadTags(),loadArticles()]);}
 async function loadCategories(){const {data,error}=await db.from('categories').select('id,name,slug,description,is_active').order('name');if(error){notice('Gagal memuat kategori: '+error.message,'error');return;}categories=data||[];$('category').innerHTML='<option value="">Pilih kategori</option>'+categories.filter(c=>c.is_active).map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');renderTaxonomy();}
 async function loadTags(){const {data,error}=await db.from('tags').select('id,name,slug').order('name');if(error){console.warn(error);return;}allTags=data||[];renderTaxonomy();}
