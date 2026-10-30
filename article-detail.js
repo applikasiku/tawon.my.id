@@ -6,6 +6,14 @@ const icon=n=>'<i class="fa-solid fa-'+n+'" aria-hidden="true"></i>';
 function addReadingExtras(a,content){
  const cover=document.querySelector('#article > img.cover');
  if(cover){const figure=document.createElement('figure');figure.className='article-cover-figure';cover.before(figure);figure.append(cover);const caption=document.createElement('figcaption');caption.textContent=a.title;figure.append(caption);}
+ // Older imported HTML sometimes includes the following paragraph inside a heading.
+ content.querySelectorAll('h2,h3').forEach(h=>{
+  const walker=document.createTreeWalker(h,NodeFilter.SHOW_TEXT);let node;
+  while(node=walker.nextNode()){const index=node.textContent.indexOf('\n');if(index<0)continue;
+   const range=document.createRange();range.setStart(node,index+1);range.setEnd(h,h.childNodes.length);const fragment=range.extractContents();node.textContent=node.textContent.trimEnd();
+   if(fragment.textContent.trim()){const lines=fragment.textContent.trim().split('\n');if(lines.every(line=>/^[-*]\s+/.test(line.trim()))){const ul=document.createElement('ul');lines.forEach(line=>{const li=document.createElement('li');li.textContent=line.trim().replace(/^[-*]\s+/,'');ul.append(li);});h.after(ul);}else{const p=document.createElement('p');p.append(fragment);h.after(p);}}break;
+  }
+ });
  let headings=[...content.querySelectorAll('h2,h3')];
  if(!headings.length){const h=document.createElement('h2');h.textContent='Isi artikel';content.prepend(h);headings=[h];}
  const toc=document.createElement('details');toc.className='article-toc';toc.open=false;toc.innerHTML='<summary>'+icon('list-ul')+' Daftar isi artikel '+icon('chevron-down')+'</summary><nav aria-label="Daftar isi"><ol></ol></nav>';
