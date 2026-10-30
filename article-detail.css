@@ -47,3 +47,11 @@ body:has(#article) main.wrap{max-width:800px;padding:0 22px 42px}
 #article .article-taxonomy a{border:0;border-radius:3px;background:#f5f5f5;padding:6px 9px;font-size:11px}
 #article .recommendation-card{border:0;border-radius:3px;background:#fafafa}
 @media(max-width:600px){body:has(#article) main.wrap{padding:0 16px 28px}#article>.title{font-size:29px;line-height:1.22}#article .content{font-size:16px;line-height:1.8}#article .action-bar{gap:10px}#article .content h2{font-size:22px}}
+
+/* Icon-only ElevenLabs article audio control */
+#article .reader-stats .audio-icon-button{width:34px;height:34px;display:inline-grid;place-items:center;margin-left:auto;padding:0;border:1px solid #eadb9d;border-radius:50%;background:#fff8dc;color:#765900;font-size:15px;cursor:pointer;flex:0 0 auto}
+#article .reader-stats .audio-icon-button:hover{background:#f4c430;color:#171717}
+#article .reader-stats .audio-icon-button:disabled{opacity:.65;cursor:wait}
+#article .reader-stats .audio-error{flex-basis:100%;margin:0;color:#b42318;font:12px/1.5 system-ui}
+#article .reader-stats .audio-error[hidden]{display:none}
+@media(max-width:480px){#article .reader-stats .audio-icon-button{margin-left:auto}}
