@@ -8,3 +8,4 @@
 .install-dismiss{background:transparent;border:0;color:#3f391e;font-size:17px;width:32px;height:36px;cursor:pointer;flex-shrink:0}
 @media(max-width:600px){.tawon-install-banner{padding:13px 10px 13px 14px;gap:9px;min-height:82px}.tawon-install-banner>img{width:36px;height:36px}.install-copy strong{font-size:13px}.install-copy span{font-size:10px;line-height:1.4}.tawon-install-banner .tawon-install{padding:10px 12px;font-size:12px}.install-dismiss{width:26px;font-size:15px}}
 @media(display-mode:standalone){.tawon-install-banner{display:none!important}}
+.tawon-install-banner{background:#101418;color:#fff;border-bottom:2px solid #facc15}.install-copy span{color:#bdc3c9}.tawon-install-banner .tawon-install{background:#facc15;color:#15191c;font-weight:850}.tawon-install-banner .tawon-install:hover{background:#ffe45c}.install-dismiss{color:#fff}
