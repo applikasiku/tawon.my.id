@@ -19,7 +19,14 @@ async function articleHtml(request,env){
  const description=plain(article.meta_description||article.excerpt||article.content).slice(0,300)||title;
  const image=absoluteImage(article.thumbnail_url)||SITE+'/assets/icon-512-v6.png';
  const canonical=SITE+'/artikel.html?slug='+encodeURIComponent(article.slug),category=article.categories?.name||'Berita';
- let html=await asset.text();html=html.replace(/<title>[\s\S]*?<\/title>/i,'');
+ let html=await asset.text();
+ const bodyText=plain(article.content||'');
+ const excerpt=plain(article.excerpt||article.meta_description||'');
+ const bodyHtml=bodyText?'<div class="content"><p>'+escHtml(bodyText)+'</p></div>':'';
+ const coverHtml=absoluteImage(article.thumbnail_url)?'<img class="cover" src="'+escHtml(absoluteImage(article.thumbnail_url))+'" alt="'+escHtml(title)+'" width="1200" height="675">':'';
+ const serverArticle='<article class="seo-server-article"><div class="category">'+escHtml(category)+'</div><h1 class="title">'+escHtml(title)+'</h1><p class="muted">TAWON.MY.ID · '+escHtml(article.published_at||'')+'</p>'+coverHtml+(excerpt?'<p class="lead">'+escHtml(excerpt)+'</p>':'')+bodyHtml+'</article>';
+ html=html.replace('<main id="article"><div class="status">Memuat artikel…</div></main>','<main id="article">'+serverArticle+'</main>');
+ html=html.replace(/<title>[\s\S]*?<\/title>/i,'');
  html=html.replace(/<meta\s+(?:name|property)=["'](?:description|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi,'');
  html=html.replace(/<link\s+rel=["']canonical["'][^>]*>/gi,'');
  const tags=['<title>'+escHtml(title)+' | TAWON.MY.ID</title>',metaTag('description',description),metaTag('robots','index,follow,max-image-preview:large'),'<link rel="canonical" href="'+escHtml(canonical)+'">',metaTag('og:site_name','TAWON.MY.ID',true),metaTag('og:type','article',true),metaTag('og:locale','id_ID',true),metaTag('og:title',title,true),metaTag('og:description',description,true),metaTag('og:url',canonical,true),metaTag('og:image',image,true),metaTag('og:image:alt',title,true),metaTag('twitter:card','summary_large_image'),metaTag('twitter:title',title),metaTag('twitter:description',description),metaTag('twitter:image',image),metaTag('article:published_time',article.published_at||'',true),metaTag('article:modified_time',article.updated_at||article.published_at||'',true),'<script type="application/ld+json">'+JSON.stringify({'@context':'https://schema.org','@type':'NewsArticle','mainEntityOfPage':{'@type':'WebPage','@id':canonical},headline:title,description,image:[image],datePublished:article.published_at,dateModified:article.updated_at||article.published_at,articleSection:category,inLanguage:'id-ID',author:{'@type':'Organization',name:'TAWON.MY.ID'},publisher:{'@type':'Organization',name:'TAWON.MY.ID',logo:{'@type':'ImageObject',url:SITE+'/assets/icon-512-v6.png'}}})+'</script>'].join('');
