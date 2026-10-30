@@ -1,5 +1,8 @@
 (()=>{
 'use strict';
+
+const contacts=document.createElement('nav');contacts.setAttribute('aria-label','Kontak TAWON');contacts.className='tawon-contact-links';contacts.innerHTML='<span>Hubungi TAWON</span><a href="mailto:redaksi@tawon.my.id">Redaksi: redaksi@tawon.my.id</a><a href="mailto:iklan@tawon.my.id">Iklan: iklan@tawon.my.id</a><a href="mailto:service@tawon.my.id">Layanan: service@tawon.my.id</a>';const footer=document.querySelector('.footer .wrap');if(footer)footer.append(contacts);else document.body.append(contacts);
+
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 setTimeout(()=>{document.getElementById('tawonSplash')?.remove();document.documentElement.classList.remove('tawon-launch');},1500);
 const offline=document.createElement('div');offline.className='tawon-offline';offline.setAttribute('role','status');offline.textContent='Anda sedang offline. Berita terbaru memerlukan koneksi internet.';document.body.append(offline);const sync=()=>offline.hidden=navigator.onLine;sync();addEventListener('online',sync);addEventListener('offline',sync);
