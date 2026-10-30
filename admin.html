@@ -91,9 +91,9 @@ body{background:#f3f5f7;font-size:14px}.wrap{max-width:1540px;padding:26px}.top{
        <div class="field"><label for="category">Kategori *</label><select id="category" required><option value="">Pilih kategori</option></select></div>
       </div>
       <div class="field"><label for="excerpt">Ringkasan / excerpt</label><textarea id="excerpt" class="short" maxlength="300" placeholder="Ringkasan artikel untuk kartu berita (maks. 300 karakter)"></textarea></div>
-      <div class="field"><label for="content">Isi artikel *</label><textarea id="content" required style="min-height:340px" placeholder="Tulis artikel di sini. Pisahkan paragraf dengan baris kosong."></textarea><small>Gunakan paragraf, subjudul, kutipan, dan sumber yang jelas. Editor menyimpan teks aman; HTML mentah tidak dirender.</small></div>
+      <div class="field"><label for="content">Isi artikel *</label><textarea id="content" required style="min-height:340px" placeholder="Gunakan ## untuk subjudul, ### untuk sub-subjudul, - untuk daftar, dan baris kosong untuk memisahkan paragraf."></textarea><small>Format: ## Subjudul, ### Sub-subjudul, - daftar poin, 1. daftar bernomor, dan &gt; kutipan. HTML mentah tidak dirender.</small></div>
       <div class="grid">
-       <div class="field"><label for="thumbnail">Thumbnail utama</label><input id="thumbnail" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small>JPG, PNG, WebP atau AVIF; maksimal 5 MB.</small><img id="thumbPreview" class="thumb hidden" alt="Pratinjau thumbnail"><input id="thumbnailUrl" type="url" placeholder="Atau tempel URL gambar yang sudah di-host"></div>
+       <div class="field"><label for="thumbnail">Thumbnail utama</label><input id="thumbnail" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small>JPG, PNG, WebP atau AVIF; maksimal 5 MB. Alt text gambar publik otomatis memakai judul artikel.</small><img id="thumbPreview" class="thumb hidden" alt="Pratinjau thumbnail"><input id="thumbnailUrl" type="url" placeholder="Atau tempel URL gambar yang sudah di-host"></div>
        <div class="field"><label for="tagInput">Tag artikel</label><input id="tagInput" placeholder="Contoh: Purbalingga, Pendidikan, UMKM"><small>Pisahkan tag dengan koma. Tag akan dibuat otomatis bila belum ada.</small><div id="tagChips"></div></div>
       </div>
       <div class="grid">
