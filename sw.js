@@ -1,6 +1,6 @@
 'use strict';
-const CACHE_NAME='tawon-pwa-v5';
-const SHELL=['/offline.html','/manifest.webmanifest','/pwa.css?v=5','/pwa.js?v=5','/assets/tawon-logo.jpg','/assets/icon-192.png','/assets/icon-512.png','/assets/icon-maskable-512.png','/assets/apple-touch-icon.png','/assets/favicon.png'];
+const CACHE_NAME='tawon-pwa-v6';
+const SHELL=['/offline.html','/manifest.webmanifest','/pwa.css?v=6','/pwa.js?v=6','/assets/tawon-logo-transparent.png','/assets/icon-192-v6.png','/assets/icon-512-v6.png','/assets/apple-touch-icon-v6.png','/assets/favicon-v6.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('tawon-')&&k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
