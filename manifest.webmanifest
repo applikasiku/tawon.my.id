@@ -1,19 +1,47 @@
 {
-  "name": "TAWON.MY.ID — Berita Indonesia",
-  "short_name": "TAWON.MY.ID",
-  "description": "Berita terkini, kabar daerah, nasional, teknologi, ekonomi, olahraga, dan inspirasi.",
+  "id": "/",
+  "name": "TAWON.MY.ID — Berita Terkini",
+  "short_name": "TAWON",
+  "description": "Berita terkini, kabar daerah, nasional, ekonomi, teknologi, dan inspirasi.",
   "lang": "id-ID",
-  "start_url": "/",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#f4c430",
+  "background_color": "#000000",
+  "theme_color": "#facc15",
+  "categories": [
+    "news",
+    "magazines"
+  ],
   "icons": [
     {
-      "src": "/assets/tawon-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Berita terbaru",
+      "url": "/"
+    },
+    {
+      "name": "Akun saya",
+      "url": "/akun.html"
     }
   ]
 }
