@@ -52,7 +52,7 @@ else if(a==='interest'){let saved=[];try{saved=JSON.parse(localStorage.getItem('
 else if(a.startsWith('https:'))window.open(a,'_blank','noopener,noreferrer');
 else {d.close();if(a==='/#latest' && document.getElementById('latest'))document.getElementById('latest').scrollIntoView({behavior:'smooth'});else location.href=a;}
 }
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
 const item=e.target.closest('[data-item]');if(item){run(services[+item.dataset.item][2]);return;}
 const service=e.target.closest('[data-service]');if(service){run(service.dataset.service);return;}
 const slide=e.target.closest('[data-slide]');if(slide)shell.querySelector('.assistance-track').scrollBy({left:+slide.dataset.slide*300,behavior:'smooth'});
@@ -61,8 +61,11 @@ if(!('speechSynthesis'in window)){status.textContent='Peramban ini belum menduku
 if(a.dataset.audio==='stop'){speechSynthesis.cancel();status.textContent='Audio dihentikan.';return;}
 if(a.dataset.audio==='pause'){speechSynthesis.paused?speechSynthesis.resume():speechSynthesis.pause();return;}
 const article=document.querySelector('#article .content');if(!article){status.textContent='Buka sebuah artikel terlebih dahulu.';return;}
+let voices=speechSynthesis.getVoices();if(!voices.length){await new Promise(resolve=>{const done=()=>{speechSynthesis.removeEventListener('voiceschanged',done);resolve();};speechSynthesis.addEventListener('voiceschanged',done);setTimeout(done,1500);});voices=speechSynthesis.getVoices();}
+const indonesian=voices.filter(v=>/^id(?:[-_]|$)/i.test(v.lang)).sort((a,b)=>(/natural|google|online/i.test(b.name)?1:0)-(/natural|google|online/i.test(a.name)?1:0));
+if(!indonesian.length){status.textContent='Suara bahasa Indonesia belum tersedia. Aktifkan atau unduh suara Indonesia pada pengaturan text-to-speech perangkat, lalu coba lagi.';return;}
 speechSynthesis.cancel();const text=(document.querySelector('#article h1')?.textContent||'')+'. '+article.innerText;
-const chunks=text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[text];for(const chunk of chunks){const u=new SpeechSynthesisUtterance(chunk);u.lang='id-ID';speechSynthesis.speak(u);}status.textContent='Sedang membacakan artikel.';
+const chunks=text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[text];for(const chunk of chunks){const u=new SpeechSynthesisUtterance(chunk);u.lang='id-ID';u.voice=indonesian[0];u.rate=.96;u.pitch=1;u.onerror=()=>{status.textContent='Audio terhenti. Tekan Putar untuk mencoba lagi.';};speechSynthesis.speak(u);}status.textContent='Membacakan dengan '+indonesian[0].name+' · Bahasa Indonesia';
 });
 document.addEventListener('submit',e=>{
 if(e.target.id==='budgetForm'){e.preventDefault();const n=+document.getElementById('monthlyIncome').value;const rp=x=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(x);document.getElementById('budgetResult').innerHTML='<p>Kebutuhan: <strong>'+rp(n*.5)+'</strong></p><p>Keinginan: <strong>'+rp(n*.3)+'</strong></p><p>Tabungan: <strong>'+rp(n*.2)+'</strong></p>';}
