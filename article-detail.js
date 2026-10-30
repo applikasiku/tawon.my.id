@@ -8,7 +8,7 @@ function addReadingExtras(a,content){
  if(cover){const figure=document.createElement('figure');figure.className='article-cover-figure';cover.before(figure);figure.append(cover);const caption=document.createElement('figcaption');caption.textContent=a.title;figure.append(caption);}
  let headings=[...content.querySelectorAll('h2,h3')];
  if(!headings.length){const h=document.createElement('h2');h.textContent='Isi artikel';content.prepend(h);headings=[h];}
- const toc=document.createElement('details');toc.className='article-toc';toc.open=true;toc.innerHTML='<summary>'+icon('list-ul')+' Daftar isi artikel '+icon('chevron-down')+'</summary><nav aria-label="Daftar isi"><ol></ol></nav>';
+ const toc=document.createElement('details');toc.className='article-toc';toc.open=false;toc.innerHTML='<summary>'+icon('list-ul')+' Daftar isi artikel '+icon('chevron-down')+'</summary><nav aria-label="Daftar isi"><ol></ol></nav>';
  headings.forEach((h,i)=>{h.id='bagian-artikel-'+(i+1);h.classList.add('article-anchor');const li=document.createElement('li');if(h.tagName==='H3')li.className='toc-sub';const link=document.createElement('a');link.href='#'+h.id;link.textContent=h.textContent;li.append(link);toc.querySelector('ol').append(li);});content.before(toc);
  const related=document.createElement('aside');related.className='article-related';related.setAttribute('aria-labelledby','relatedHeading');related.innerHTML='<h2 id="relatedHeading">'+icon('book-open')+' Baca juga:</h2><ol id="relatedArticles"><li>Memuat artikel terkait…</li></ol>';content.after(related);
  const recommendation=document.createElement('section');recommendation.className='article-recommendations';recommendation.setAttribute('aria-labelledby','recommendationHeading');recommendation.innerHTML='<div class="recommendation-heading"><div><small>PILIHAN UNTUK ANDA</small><h2 id="recommendationHeading">Rekomendasi berita</h2></div><span>'+icon('hand-pointer')+' Geser</span></div><div class="recommendation-track" id="recommendationTrack" tabindex="0" aria-label="Geser rekomendasi berita"></div>';
@@ -30,12 +30,45 @@ async function start(a){
  if(currentId===a.id)return;currentId=a.id;
  const content=document.querySelector('#article .content');if(!content)return;
  const author=document.getElementById('articleAuthor');const heading=document.querySelector('#article h1');
+
  heading.after(author);author.classList.add('article-byline');
+ // Keep the published date with the byline instead of a second author row.
+ const oldMeta=document.querySelector('#article > p.muted');
+ if(oldMeta){const time=oldMeta.querySelector('time');if(time){time.className='article-published';author.querySelector('.author-info').append(time);}oldMeta.remove();}
+ const first=content.querySelector('p');
+ if(first){
+  const text=first.textContent.trim();
+  const cityMatch=text.match(/^(Jakarta|Bandung|Surabaya|Semarang|Yogyakarta|Banyumas|Purwokerto|Medan|Makassar|Denpasar|Bogor|Depok|Bekasi|Tangerang|Solo|Surakarta|Palembang|Malang|Bali|Indonesia)\s*[,–—:-]\s*/i);
+  const existing=text.match(/^([\p{L} .-]{2,45}?)\s*[,–—:]?\s*TAWON\.MY\.ID\s*[,–—:-]?\s*/iu);
+  const prefix=existing||cityMatch;
+  const city=prefix?prefix[1].toLocaleLowerCase('id-ID').replace(/(^|\s)\p{L}/gu,c=>c.toLocaleUpperCase('id-ID')):'Indonesia';
+  // Remove only the matching text prefix; preserve links and formatting in the lead.
+  if(prefix){let remaining=prefix[0].length;const walker=document.createTreeWalker(first,NodeFilter.SHOW_TEXT);let node;while(remaining>0&&(node=walker.nextNode())){const n=Math.min(remaining,node.textContent.length);node.textContent=node.textContent.slice(n);remaining-=n;}}
+  const dateline=document.createElement('strong');dateline.className='article-dateline';dateline.textContent=city+', Tawon.my.id — ';first.prepend(dateline);
+ }
+
  const stats=document.createElement('div');stats.className='reader-stats';stats.innerHTML='<span title="Jumlah pembacaan, bukan pengunjung unik">'+icon('eye')+' <span id="articleViews">—</span> pembacaan</span><a href="#articleRating">'+icon('star')+' <span id="articleRatingSummary">Belum ada rating</span></a><button type="button" data-service="audio" aria-label="Dengarkan artikel dalam bahasa Indonesia">'+icon('headphones')+' Audio berita</button>';author.after(stats);
  const taxonomy=document.createElement('nav');taxonomy.className='article-taxonomy';taxonomy.setAttribute('aria-label','Kategori dan hashtag artikel');
  taxonomy.innerHTML='<a class="article-category-link" href="/#kategori-'+encodeURIComponent(a.categories?.slug||'nasional')+'">'+icon('folder-open')+' '+esc(a.categories?.name||'Berita')+'</a>'+(a.article_tags?.length?a.article_tags:[{tags:{name:a.categories?.name||'Berita'}}]).filter(t=>t.tags?.name).map(t=>'<a href="/?q='+encodeURIComponent(t.tags.name)+'">#'+esc(t.tags.name.replace(/^#/,''))+'</a>').join('');content.after(taxonomy);
  const rating=document.createElement('section');rating.id='articleRating';rating.className='article-rating';rating.innerHTML='<div><small>PENDAPAT PEMBACA</small><h2>Bagaimana artikel ini?</h2><p id="ratingAggregate">Memuat penilaian pembaca…</p></div><div class="rating-stars" role="group" aria-label="Beri rating satu sampai lima bintang">'+[1,2,3,4,5].map(n=>'<button type="button" data-rating="'+n+'" aria-label="Beri '+n+' bintang" aria-pressed="false"><i class="fa-regular fa-star" aria-hidden="true"></i></button>').join('')+'</div><p id="ratingStatus" role="status">Masuk untuk memberi rating. Satu penilaian per akun, dapat diperbarui.</p><a href="/akun.html">Masuk / daftar akun</a>';taxonomy.after(rating);
  addReadingExtras(a,content);
+ const bottomActions=document.querySelector('#article > .action-bar');
+ if(bottomActions){
+  bottomActions.setAttribute('aria-label','Interaksi setelah artikel');
+  const topActions=bottomActions.cloneNode(true);topActions.classList.add('article-top-actions');topActions.setAttribute('aria-label','Interaksi di bawah penulis');
+  // Proxy to the original handlers so both rows share reaction and bookmark state.
+  topActions.querySelectorAll('[id]').forEach(el=>{el.dataset.originalId=el.id;el.removeAttribute('id');});
+  topActions.querySelector('.reaction-menu')?.remove();
+  topActions.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>{
+   const original=document.getElementById(button.dataset.originalId);if(!original)return;
+   if(button.dataset.originalId==='articleReaction'){bottomActions.scrollIntoView({behavior:'smooth',block:'center'});}
+   original.click();
+  }));
+  const sync=()=>topActions.querySelectorAll('[data-original-id]').forEach(el=>{const original=document.getElementById(el.dataset.originalId);if(!original)return;if(el.tagName==='BUTTON'){el.className=original.className;for(const attr of ['aria-pressed','aria-expanded'])if(original.hasAttribute(attr))el.setAttribute(attr,original.getAttribute(attr));}else el.textContent=original.textContent;});
+  new MutationObserver(sync).observe(bottomActions,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class','aria-pressed','aria-expanded']});
+  stats.after(topActions);
+ }
+
  let db=window.supabase?.createClient(U,K),user=null;
  if(db){const session=await db.auth.getSession();user=session.data.session?.user;if(user){const {data}=await db.from('article_ratings').select('rating').eq('article_id',a.id).eq('user_id',user.id).maybeSingle();if(data)stars(data.rating);}}
  function stars(n){rating.querySelectorAll('[data-rating]').forEach(b=>{const active=+b.dataset.rating<=n;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(+b.dataset.rating===n));b.querySelector('i').className=(active?'fa-solid':'fa-regular')+' fa-star';});}
