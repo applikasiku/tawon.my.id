@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+const newsAudio=document.createElement('audio');newsAudio.controls=true;newsAudio.preload='none';newsAudio.style.width='100%';newsAudio.setAttribute('aria-label','Audio artikel ElevenLabs');let audioSlug='',audioURL='',audioLoading=false;
 const fa=n=>'<i class="fa-solid fa-'+n+'" aria-hidden="true"></i>';
 const services=[
 ['cloud-sun','Cuaca','https://www.bmkg.go.id/','Prakiraan BMKG'],
@@ -41,10 +42,10 @@ const d=document.createElement('dialog');d.className='assistance-modal';d.setAtt
 try{const choices=JSON.parse(localStorage.getItem('tawon-interests')||'[]');if(Array.isArray(choices)&&choices.length){const nav=document.createElement('nav');nav.className='interest-shortcuts';nav.setAttribute('aria-label','Rubrik pilihan Anda');nav.textContent='Pilihan Anda: ';for(const x of choices){if(typeof x!=='string')continue;const link=document.createElement('a');link.textContent=x;link.href='/#kategori-'+x.toLowerCase().replaceAll(' ','-');nav.append(link);}shell.append(nav);}}catch(e){}
 let opener;
 function show(title,html){opener=document.activeElement;d.querySelector('h2').textContent=title;d.querySelector('.assistance-modal-body').innerHTML=html;if(!d.open)d.showModal();}
-d.querySelector('button').onclick=()=>d.close();d.onclick=e=>{if(e.target===d)d.close();};d.addEventListener('close',()=>opener?.focus());
+d.querySelector('button').onclick=()=>d.close();d.onclick=e=>{if(e.target===d)d.close();};d.addEventListener('close',()=>{newsAudio.pause();opener?.focus();});
 function run(a){
 if(a==='all')show('Living Assistance','<div class="assistance-grid">'+services.map((s,i)=>'<button data-item="'+i+'">'+fa(s[0])+'<span>'+s[1]+'</span></button>').join('')+'</div>');
-else if(a==='audio')show('Audio berita','<p>Dengarkan artikel yang sedang dibuka dengan suara dari perangkat Anda.</p><p id="audioStatus" role="status"></p><div class="service-controls">'+[['play','Putar'],['pause','Jeda / lanjut'],['stop','Hentikan']].map(s=>'<button data-audio="'+s[0]+'">'+fa(s[0])+' '+s[1]+'</button>').join('')+'</div><p class="service-note">Ketersediaan suara bahasa Indonesia bergantung pada perangkat. <a href="/">Pilih artikel di beranda</a>.</p>');
+else if(a==='audio'){show('Audio berita','<p>Suara AI perempuan · Bahasa Indonesia · ElevenLabs</p><p id="audioStatus" role="status">Tekan Putar untuk mendengarkan artikel.</p><div id="audioPlayerSlot"></div><div class="service-controls">'+[['play','Putar'],['pause','Jeda / lanjut'],['stop','Hentikan']].map(s=>'<button data-audio="'+s[0]+'">'+fa(s[0])+' '+s[1]+'</button>').join('')+'</div>');d.querySelector('#audioPlayerSlot').append(newsAudio);}
 else if(a==='menu')openDrawer();
 else if(a==='shop')show('Belanja & kerja sama','<div class="service-feature">'+fa('bag-shopping')+'<h3>Ruang mitra TAWON</h3><p>Katalog belanja belum tersedia. Hubungi tim kami untuk penawaran produk, iklan, dan kerja sama.</p><a href="/info.html?page=iklan">Informasi iklan & kerja sama '+fa('arrow-right')+'</a><p><a href="mailto:iklan@tawon.my.id">iklan@tawon.my.id</a></p></div>');
 else if(a==='budget')show('Atur keuangan','<form id="budgetForm" class="service-search"><label for="monthlyIncome">Pendapatan bulanan (Rp)</label><input id="monthlyIncome" type="number" min="1" max="1000000000000" placeholder="Contoh: 5000000" required><button>Hitung anggaran</button></form><div id="budgetResult" role="status"></div><p class="service-note">Simulasi 50% kebutuhan, 30% keinginan, 20% tabungan. Sesuaikan dengan kondisi pribadi. Angka tidak dikirim ke server.</p>');
@@ -57,15 +58,13 @@ const item=e.target.closest('[data-item]');if(item){run(services[+item.dataset.i
 const service=e.target.closest('[data-service]');if(service){run(service.dataset.service);return;}
 const slide=e.target.closest('[data-slide]');if(slide)shell.querySelector('.assistance-track').scrollBy({left:+slide.dataset.slide*300,behavior:'smooth'});
 const a=e.target.closest('[data-audio]');if(!a)return;const status=document.getElementById('audioStatus');
-if(!('speechSynthesis'in window)){status.textContent='Peramban ini belum mendukung pembaca suara.';return;}
-if(a.dataset.audio==='stop'){speechSynthesis.cancel();status.textContent='Audio dihentikan.';return;}
-if(a.dataset.audio==='pause'){speechSynthesis.paused?speechSynthesis.resume():speechSynthesis.pause();return;}
-const article=document.querySelector('#article .content');if(!article){status.textContent='Buka sebuah artikel terlebih dahulu.';return;}
-let voices=speechSynthesis.getVoices();if(!voices.length){await new Promise(resolve=>{const done=()=>{speechSynthesis.removeEventListener('voiceschanged',done);resolve();};speechSynthesis.addEventListener('voiceschanged',done);setTimeout(done,1500);});voices=speechSynthesis.getVoices();}
-const indonesian=voices.filter(v=>/^id(?:[-_]|$)/i.test(v.lang)).sort((a,b)=>(/natural|google|online/i.test(b.name)?1:0)-(/natural|google|online/i.test(a.name)?1:0));
-if(!indonesian.length){status.textContent='Suara bahasa Indonesia belum tersedia. Aktifkan atau unduh suara Indonesia pada pengaturan text-to-speech perangkat, lalu coba lagi.';return;}
-speechSynthesis.cancel();const text=(document.querySelector('#article h1')?.textContent||'')+'. '+article.innerText;
-const chunks=text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[text];for(const chunk of chunks){const u=new SpeechSynthesisUtterance(chunk);u.lang='id-ID';u.voice=indonesian[0];u.rate=.96;u.pitch=1;u.onerror=()=>{status.textContent='Audio terhenti. Tekan Putar untuk mencoba lagi.';};speechSynthesis.speak(u);}status.textContent='Membacakan dengan '+indonesian[0].name+' · Bahasa Indonesia';
+
+if(a.dataset.audio==='stop'){newsAudio.pause();newsAudio.currentTime=0;status.textContent='Audio dihentikan.';return;}
+if(a.dataset.audio==='pause'){if(!newsAudio.src){status.textContent='Tekan Putar terlebih dahulu.';return;}if(newsAudio.paused){try{await newsAudio.play();}catch{status.textContent='Gunakan tombol putar pada pemutar audio.';}}else newsAudio.pause();return;}
+const slug=new URLSearchParams(location.search).get('slug');if(!slug||!document.querySelector('#article .content')){status.textContent='Buka sebuah artikel terlebih dahulu untuk mendengarkan berita.';return;}
+if(audioLoading)return;
+try{if(audioSlug!==slug||!audioURL){audioLoading=true;status.textContent='Menyiapkan audio ElevenLabs…';const response=await fetch('/api/audio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug})});if(!response.ok){let message='Audio belum dapat dimuat.';try{message=(await response.json()).message||message;}catch{}throw Error(message);}if(!(response.headers.get('Content-Type')||'').startsWith('audio/'))throw Error('Layanan audio belum tersedia.');const blob=await response.blob();if(audioURL)URL.revokeObjectURL(audioURL);audioURL=URL.createObjectURL(blob);audioSlug=slug;newsAudio.src=audioURL;}status.textContent='Audio siap · Suara AI perempuan berbahasa Indonesia';try{await newsAudio.play();}catch{status.textContent='Audio siap. Tekan tombol putar pada pemutar audio.';}}catch(err){status.textContent=err.message;}finally{audioLoading=false;}
+
 });
 document.addEventListener('submit',e=>{
 if(e.target.id==='budgetForm'){e.preventDefault();const n=+document.getElementById('monthlyIncome').value;const rp=x=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(x);document.getElementById('budgetResult').innerHTML='<p>Kebutuhan: <strong>'+rp(n*.5)+'</strong></p><p>Keinginan: <strong>'+rp(n*.3)+'</strong></p><p>Tabungan: <strong>'+rp(n*.2)+'</strong></p>';}

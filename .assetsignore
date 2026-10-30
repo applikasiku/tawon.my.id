@@ -1,0 +1,14 @@
+server/
+database/
+content/
+content-work/
+preview/
+upload/
+generated_images/
+.git/
+.openai/
+node_modules/
+wrangler.jsonc
+*.md
+*.sql
+*.test.mjs
