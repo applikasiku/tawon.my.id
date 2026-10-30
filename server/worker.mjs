@@ -40,7 +40,7 @@ async function sitemapResponse(){
  const r=await fetch(q,{headers:{apikey:PUBLIC_KEY,Authorization:'Bearer '+PUBLIC_KEY},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('sitemap_query_'+r.status);
  const rows=await r.json();all.push(...rows);if(rows.length<500)break;offset+=rows.length;}
  const urls=[{loc:SITE+'/',lastmod:new Date().toISOString().slice(0,10)},...all.map(a=>({loc:SITE+'/artikel.html?slug='+encodeURIComponent(a.slug),lastmod:(a.updated_at||a.published_at||'').slice(0,10),image:absoluteImage(a.thumbnail_url)}))];
- const xml='<?xml version="1.0" encoding="UTF-8"?>\\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\\n'+urls.map(x=>'  <url><loc>'+escHtml(x.loc)+'</loc>'+(x.lastmod?'<lastmod>'+x.lastmod+'</lastmod>':'')+(x.image?'<image:image><image:loc>'+escHtml(x.image)+'</image:loc></image:image>':'')+'</url>').join('\\n')+'\\n</urlset>';
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n'+urls.map(x=>'  <url><loc>'+escHtml(x.loc)+'</loc>'+(x.lastmod?'<lastmod>'+x.lastmod+'</lastmod>':'')+(x.image?'<image:image><image:loc>'+escHtml(x.image)+'</image:loc></image:image>':'')+'</url>').join('\n')+'\n</urlset>';
  return new Response(xml,{headers:{'Content-Type':'application/xml; charset=utf-8','Cache-Control':'public, max-age=300, s-maxage=900','X-Content-Type-Options':'nosniff'}});
 }
 const PUBLIC_KEY='sb_publishable_-XnVkQ5Jgi0ji47eizdS9g_XOY2Ao48';
