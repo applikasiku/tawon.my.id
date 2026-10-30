@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-30",
+  "format": "Berita penjelas; facts attributed to official releases, analysis labelled separately",
+  "images": "Original TAWON editorial graphics; not documentary photos",
+  "plagiarism": "Original composition; no identical paragraphs within batch. No external plagiarism certification.",
+  "sources": [
+    {
+      "article": "empat-agenda-ruu-dpr-poin-penting-pengawasan-publik",
+      "url": "https://www.dpr.go.id/kegiatan-dpr/berita/Fokus-Bahas-Empat-RUU-DPR-Terjemahkan-Semangat-Sumpah-Pemuda-28-Oktober-70318",
+      "release_date": "2026-10-28"
+    },
+    {
+      "article": "kedaulatan-data-prabowo-arti-bagi-warga",
+      "url": "https://setneg.go.id/baca/index/terima_tim_perumus_uu_satu_data_indonesia_presiden_prabowo_tekankan_kedaulatan_data",
+      "release_date": "2026-10-29"
+    },
+    {
+      "article": "listrik-desa-dibahas-istana-pengawasan-warga",
+      "url": "https://www.setneg.go.id/baca/index/presiden_prabowo_panggil_menko_bahlil_bahas_listrik_desa_hingga_pabrik_baterai_catl_antam",
+      "release_date": "2026-10-29"
+    },
+    {
+      "article": "pangan-jelang-nataru-langkah-target-pemerintah",
+      "url": "https://www.setneg.go.id/baca/index/jelang_nataru_pemerintah_perkuat_pasokan_dan_stabilitas_harga_pangan",
+      "release_date": "2026-10-27"
+    },
+    {
+      "article": "sekolah-rakyat-tahap-dua-target-ukuran-manfaat",
+      "url": "https://www.setneg.go.id/baca/index/bangun_sekolah_rakyat_di_32_provinsi_pemerintah_serap_97_ribu_tenaga_kerja",
+      "release_date": "2026-10-27"
+    }
+  ]
+}
