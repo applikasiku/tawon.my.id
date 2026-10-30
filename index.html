@@ -50,4 +50,4 @@ const drawer=document.getElementById('siteDrawer'),backdrop=document.getElementB
 document.getElementById('date').textContent=new Intl.DateTimeFormat('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());document.getElementById('year').textContent=new Date().getFullYear();
 document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();const q=document.getElementById('searchInput').value.trim().toLocaleLowerCase('id');let n=0;document.querySelectorAll('#storyCards .card').forEach(el=>{const ok=!q||(el.dataset.search||el.innerText.toLocaleLowerCase('id')).includes(q);el.style.display=ok?'':'none';if(ok)n++});document.getElementById('emptyState').style.display=n?'none':'block';closeMenu();document.getElementById('storyCards').scrollIntoView({behavior:'smooth',block:'start'});});
 load();if('serviceWorker'in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-</script></body></html>
+</script><script src="/frontend-settings.js?v=4" defer></script></body></html>
