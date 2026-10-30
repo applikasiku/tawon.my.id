@@ -55,7 +55,24 @@ async function start(a){
   const dateline=document.createElement('strong');dateline.className='article-dateline';dateline.textContent=city+', Tawon.my.id — ';first.prepend(dateline);
  }
 
- const stats=document.createElement('div');stats.className='reader-stats';stats.innerHTML='<span title="Jumlah pembacaan, bukan pengunjung unik">'+icon('eye')+' <span id="articleViews">—</span> pembacaan</span><a href="#articleRating">'+icon('star')+' <span id="articleRatingSummary">Belum ada rating</span></a><button type="button" data-service="audio" aria-label="Dengarkan artikel dalam bahasa Indonesia">'+icon('headphones')+' Audio berita</button>';author.after(stats);
+ const stats=document.createElement('div');stats.className='reader-stats';stats.innerHTML='<span title="Jumlah pembacaan, bukan pengunjung unik">'+icon('eye')+' <span id="articleViews">—</span> pembacaan</span><a href="#articleRating">'+icon('star')+' <span id="articleRatingSummary">Belum ada rating</span></a><button type="button" class="audio-icon-button" data-service="audio" aria-label="Dengarkan artikel" title="Dengarkan artikel">'+icon('headphones')+'</button><span class="audio-error" id="audioError" role="status" aria-live="polite" hidden></span>';author.after(stats);
+ const audioButton=stats.querySelector('[data-service="audio"]');let audioElement=null,audioUrl=null,audioBusy=false;
+ audioButton.addEventListener('click',async()=>{
+  const errorBox=stats.querySelector('#audioError');errorBox.hidden=true;errorBox.textContent='';
+  if(audioElement&&!audioElement.paused){audioElement.pause();audioButton.innerHTML=icon('headphones');audioButton.title='Lanjutkan audio';audioButton.setAttribute('aria-label','Lanjutkan audio');return;}
+  if(audioElement&&audioElement.paused&&audioUrl){try{await audioElement.play();audioButton.innerHTML=icon('pause');audioButton.title='Jeda audio';audioButton.setAttribute('aria-label','Jeda audio');return;}catch(e){}}
+  if(audioBusy)return;audioBusy=true;audioButton.disabled=true;audioButton.innerHTML=icon('spinner fa-spin');audioButton.title='Menyiapkan audio';
+  try{
+   const response=await fetch('/api/audio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:a.slug})});
+   if(!response.ok){let message='Audio belum dapat diputar. Silakan coba lagi.';try{const data=await response.json();if(data?.message)message=data.message;}catch(e){}throw Error(message);}
+   const blob=await response.blob();if(!blob.type.startsWith('audio/'))throw Error('Format audio tidak dikenali.');
+   if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl=URL.createObjectURL(blob);audioElement=new Audio(audioUrl);
+   audioElement.addEventListener('ended',()=>{audioButton.innerHTML=icon('headphones');audioButton.title='Putar ulang audio';audioButton.setAttribute('aria-label','Putar ulang audio');});
+   audioElement.addEventListener('error',()=>{errorBox.textContent='Audio gagal diputar. Silakan muat ulang halaman.';errorBox.hidden=false;audioButton.innerHTML=icon('headphones');});
+   await audioElement.play();audioButton.innerHTML=icon('pause');audioButton.title='Jeda audio';audioButton.setAttribute('aria-label','Jeda audio');
+  }catch(error){errorBox.textContent=error.message||'Audio gagal dimuat. Silakan coba lagi.';errorBox.hidden=false;audioButton.innerHTML=icon('headphones');audioButton.title='Coba putar audio lagi';audioButton.setAttribute('aria-label','Coba putar audio lagi');}
+  finally{audioBusy=false;audioButton.disabled=false;}
+ });
  const taxonomy=document.createElement('nav');taxonomy.className='article-taxonomy';taxonomy.setAttribute('aria-label','Kategori dan hashtag artikel');
  taxonomy.innerHTML='<a class="article-category-link" href="/#kategori-'+encodeURIComponent(a.categories?.slug||'nasional')+'">'+icon('folder-open')+' '+esc(a.categories?.name||'Berita')+'</a>'+(a.article_tags?.length?a.article_tags:[{tags:{name:a.categories?.name||'Berita'}}]).filter(t=>t.tags?.name).map(t=>'<a href="/?q='+encodeURIComponent(t.tags.name)+'">#'+esc(t.tags.name.replace(/^#/,''))+'</a>').join('');content.after(taxonomy);
  const rating=document.createElement('section');rating.id='articleRating';rating.className='article-rating';rating.innerHTML='<div><small>PENDAPAT PEMBACA</small><h2>Bagaimana artikel ini?</h2><p id="ratingAggregate">Memuat penilaian pembaca…</p></div><div class="rating-stars" role="group" aria-label="Beri rating satu sampai lima bintang">'+[1,2,3,4,5].map(n=>'<button type="button" data-rating="'+n+'" aria-label="Beri '+n+' bintang" aria-pressed="false"><i class="fa-regular fa-star" aria-hidden="true"></i></button>').join('')+'</div><p id="ratingStatus" role="status">Masuk untuk memberi rating. Satu penilaian per akun, dapat diperbarui.</p><a href="/akun.html">Masuk / daftar akun</a>';taxonomy.after(rating);
