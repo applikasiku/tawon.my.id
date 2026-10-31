@@ -1,75 +1,37 @@
-# TAWON.MY.ID
+# TAWON — English edition
 
-Portal berita Indonesia dengan identitas visual kuning, hitam, dan putih.
+TAWON is an English-language practical publication at https://tawon.my.id, hosted by the existing Cloudflare Worker `tawon-my-id` and backed by the existing Supabase project. The original 22 Indonesian articles remain published at their original URLs and are collected at `/archive`.
 
-## Status saat ini
+## Public experience
 
-Tahap **V2 — homepage dan halaman artikel terhubung ke Supabase**:
-- Halaman depan responsif dan PWA.
-- Beranda mengambil artikel berstatus `published` dari Supabase REST API.
-- Kategori navigasi diambil dari database.
-- Pencarian sisi-klien untuk artikel yang sudah dimuat.
-- Halaman detail `artikel.html?slug=...` memuat artikel berdasarkan slug.
-- Metadata dasar, canonical, Open Graph title, dan structured data NewsArticle pada halaman detail.
-- Service worker diperbarui untuk halaman detail artikel.
-- Database Supabase memakai RLS pada seluruh tabel aplikasi.
+The Worker renders home, category, article, information, search and account shells on the server. English discovery sections are Technology, Business, Learning, Living and Sustainability. Published English articles are selected by `articles.language = 'en'`. Indonesian archival articles retain `language = 'id'`; new CMS articles default to English. There is no geographic redirection and no fabricated `hreflang` pairing between unrelated articles.
 
-## Database
+Article interactions include device-only bookmarks, sharing, text size, reactions, public comments, account-based ratings and ElevenLabs audio when configured. Account credentials remain in Supabase Auth, with authorization enforced by existing database RLS. The redesign does not activate ads or analytics.
 
-Supabase project ref: `ajqwpbpaozlurqoxysjt`
+## Source and deployment
 
-Tabel:
-- `profiles`
-- `categories`
-- `articles`
-- `tags`
-- `article_tags`
-- `article_views`
-- `site_settings`
+- `server/worker.mjs`: routing, bounded data retrieval, edge caching, sitemap, RSS and public assets.
+- `server/international/render.mjs`: HTML rendering, metadata, structured data and content sanitization.
+- `server/international/styles.mjs`: responsive editorial design.
+- `server/international/client.js`: reader interactions and account UI.
+- `server/international/client.mjs`: generated string module for Worker deployment.
+- `server/international/pages.mjs`: English information and policy pages.
+- `server/international/admin.mjs`: generated module from `admin.html` so native API deployments retain the updated CMS.
+- `server/international/editorial.mjs`: generated module from `editorial-standard.js`.
+- `server/legacy.mjs`: retained audio implementation; language follows the article, with optional `ELEVENLABS_EN_VOICE_ID`.
+- `database/international-edition.sql`: applied schema and bilingual editorial validation update.
+- `content/english-launch.json` and `content/english/`: six original launch guides, published to Supabase.
 
-Frontend memakai Supabase project URL dan publishable/anon key. Publishable key memang dirancang untuk penggunaan klien, tetapi keamanan tetap bergantung pada RLS dan kebijakan database. **Jangan pernah memasukkan service-role key, database password, atau secret API ke frontend.**
+Update generated string modules after editing their source: `export default ${JSON.stringify(source)};`. All Worker modules must be included in native multipart deployments, or bundled by Wrangler. The existing asset collection can be retained using `keep_assets: true` and `assets.config.run_worker_first: true`. Preserve existing bindings and secrets. `wrangler.jsonc` also configures Worker-first routing for reproducible CLI deployments.
 
-## File utama
+Do not put credentials into source. Supabase's publishable key is intentionally public; service role keys and ElevenLabs keys belong only in server secrets. The English audio voice setting is optional; the existing multilingual voice remains the fallback. Missing audio configuration is presented honestly to readers.
 
-- `index.html` — beranda yang mengambil artikel dan kategori dari Supabase.
-- `artikel.html` — detail artikel berdasarkan slug.
-- `manifest.webmanifest` — metadata PWA.
-- `sw.js` — service worker/cache shell.
-- `assets/tawon-logo.svg` — logo SVG.
-- `robots.txt` dan `sitemap.xml` — berkas crawler awal.
+## Editorial and SEO
 
-## Batasan yang masih ada
+Public pages have server-rendered titles, descriptions, canonical URLs, language declarations, Open Graph/Twitter tags and applicable Article/Breadcrumb/Organization schema. Search and account pages are noindex; unpublished articles are unavailable publicly. Sitemap includes actual published articles and stable information/category URLs; RSS includes English posts only. The app manifest and service-worker replacement are English, and stale TAWON caches are cleared during activation.
 
-- Dashboard CMS/login admin belum dibuat.
-- Belum ada alur aman untuk membuat akun admin dan mengatur role pertama.
-- Upload media belum terhubung ke Cloudflare R2/Supabase Storage.
-- Sitemap masih statis dan belum memuat URL artikel baru.
-- Halaman artikel memakai query-string slug; untuk SEO terbaik sebaiknya gunakan route URL bersih/server-rendered.
-- Penghitungan views belum dihubungkan dari frontend.
-- Konten akan kosong sampai artikel terbit ditambahkan ke database.
-- Belum ada konfirmasi deployment/live domain setelah commit GitHub.
+The existing 1,000-word publishing rule is retained as an internal workflow choice, not a claim about Google requirements. English conclusions accept `Next steps`, `Conclusion` or `Takeaway`; Indonesian conclusions still work. Ads require separate provider setup, privacy/consent review and approval. No ranking, CTR or AdSense acceptance is guaranteed.
 
-## Deployment dan verifikasi
+## Validation
 
-Pastikan hosting mengarah ke repository ini, HTTPS aktif, dan domain `tawon.my.id` sudah terhubung. Setelah deploy, uji beranda, REST API publik, halaman artikel, cache service worker, dan sitemap. Pengindeksan Google/Google News maupun persetujuan AdSense tidak dapat dijamin hanya dengan metadata.
-
-
-## CMS Admin
-
-- Open `/admin.html` on the deployed domain.
-- Sign in with Supabase Auth, or create an account. New accounts are assigned the `author` role automatically by a database trigger and cannot self-promote.
-- The dashboard includes article drafts/review/publishing, title and slug, excerpt, body, category, comma-separated tags, thumbnail upload (JPG/PNG/WebP/AVIF up to 5 MB), featured flag, SEO title/description, canonical URL, Open Graph image, article list/search/edit, and category/tag creation.
-- Thumbnail files use the public Supabase Storage bucket `article-thumbnails`. Only admin/editor roles may upload or replace files; public read access is required for published image URLs.
-- Only admin/editor accounts can publish directly. Authors can save drafts and submit for review.
-- **Initial administrator setup is intentionally manual and secure:** register an account in the dashboard first, verify the email if Supabase Auth requires it, then promote that specific user to admin in the Supabase SQL editor. Never allow public users to choose their own role.
-
-Example SQL to run only after replacing the email with the exact email address of your own registered account:
-```sql
-insert into public.profiles (id, display_name, role)
-select id, split_part(email, '@', 1), 'admin'
-from auth.users
-where lower(email) = lower('YOUR-EMAIL@example.com')
-on conflict (id) do update set role = 'admin';
-```
-
-After changing the role, sign out and sign in again, then reload `/admin.html`. Do not put a Supabase service-role key in the browser.
+Completed route/status/metadata checks, publishing validation for all six guides, 390px mobile and desktop visual review, and database verification of language counts. Live article rendering, archive continuity and interactions should also be checked after deployment. Never post production test comments or ratings just to test a control.

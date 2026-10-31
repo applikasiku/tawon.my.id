@@ -18,12 +18,12 @@ function inspect(a){
  if(!/<(?:ul|ol|table)\b|^\s*(?:[-*]|\d+\.)\s+/mi.test(c))errors.push('Tambahkan daftar langkah, poin, atau tabel yang membantu pembaca.');
  if(!/(?:href=["']\/?(?:artikel|info)|\]\(\/?(?:artikel|info)|href=["']https:\/\/tawon\.my\.id)/i.test(c))errors.push('Tambahkan tautan internal yang relevan dalam pembahasan.');
  if(!/(?:href=["']https:\/\/(?!tawon\.my\.id)|\]\(https:\/\/(?!tawon\.my\.id))/i.test(c))errors.push('Sertakan tautan sumber eksternal tepercaya.');
- if(!/(?:kesimpulan|penutup|langkah berikutnya)/i.test(t.slice(-1800)))errors.push('Akhiri dengan kesimpulan dan langkah berikutnya.');
+ if(!/(?:kesimpulan|penutup|langkah berikutnya|conclusion|next steps|takeaway)/i.test(t.slice(-1800)))errors.push('Akhiri dengan kesimpulan dan langkah berikutnya.');
  const ps=(c.match(/<p[^>]*>[\s\S]*?<\/p>/gi)||[]).map(plain).filter(x=>x.split(' ').length>20);
  if(new Set(ps.map(x=>x.toLowerCase())).size<ps.length)errors.push('Hapus paragraf yang identik dan berulang.');
  if(meta.length<45||meta.length>60)warnings.push('Target judul SEO sekitar 45–60 karakter, tanpa mengorbankan kejelasan.');
  if(words>2500)warnings.push('Periksa kebutuhan pembaca sebelum mempertahankan artikel di atas 2.500 kata.');
- return {version:'TAWON-1.0',words,errors,warnings,ready:!errors.length};
+ return {version:'TAWON-2.0',words,errors,warnings,ready:!errors.length};
 }
 root.TawonEditorial={inspect,plain};if(typeof module!=='undefined')module.exports=root.TawonEditorial;
 })(typeof window!=='undefined'?window:globalThis);
