@@ -23,5 +23,17 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 0.1
+  },
+  "previews": {
+    "ratelimits": [
+      {
+        "name": "AUDIO_RATE_LIMIT",
+        "namespace_id": "76261602",
+        "simple": {
+          "limit": 4,
+          "period": 60
+        }
+      }
+    ]
   }
 }

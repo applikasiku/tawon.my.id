@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
-
+Disallow: /admin
+Disallow: /account
+Disallow: /akun
+Disallow: /search
+Disallow: /content/
+Disallow: /database/
+Disallow: /server/
 Sitemap: https://tawon.my.id/sitemap.xml

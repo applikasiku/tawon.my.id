@@ -1,10 +1,10 @@
 # TAWON — English edition
 
-TAWON is an English-language practical publication at https://tawon.my.id, hosted by the existing Cloudflare Worker `tawon-my-id` and backed by the existing Supabase project. The original 22 Indonesian articles remain published at their original URLs and are collected at `/archive`.
+TAWON is an English-language practical publication at https://tawon.my.id, hosted by the existing Cloudflare Worker `tawon-my-id` and backed by the existing Supabase project. All 28 published articles are now in English. The 22 earlier articles retain their record IDs, source links and publication dates; old Indonesian URLs redirect permanently to their English URLs.
 
 ## Public experience
 
-The Worker renders home, category, article, information, search and account shells on the server. English discovery sections are Technology, Business, Learning, Living and Sustainability. Published English articles are selected by `articles.language = 'en'`. Indonesian archival articles retain `language = 'id'`; new CMS articles default to English. There is no geographic redirection and no fabricated `hreflang` pairing between unrelated articles.
+The Worker renders home, category, article, information, search and account shells on the server. English discovery sections are Technology, Business, Learning, Living and Sustainability. Published English articles are selected by `articles.language = 'en'`. All published articles now use `language = 'en'`; new CMS articles default to English. There is no geographic redirection or fabricated `hreflang` pairing. Canonical article URLs use `/article/<english-slug>`; old `/artikel.html?slug=...` links remain compatible through permanent redirects.
 
 Article interactions include device-only bookmarks, sharing, text size, reactions, public comments, account-based ratings and ElevenLabs audio when configured. Account credentials remain in Supabase Auth, with authorization enforced by existing database RLS. The redesign does not activate ads or analytics.
 
@@ -30,8 +30,12 @@ Do not put credentials into source. Supabase's publishable key is intentionally 
 
 Public pages have server-rendered titles, descriptions, canonical URLs, language declarations, Open Graph/Twitter tags and applicable Article/Breadcrumb/Organization schema. Search and account pages are noindex; unpublished articles are unavailable publicly. Sitemap includes actual published articles and stable information/category URLs; RSS includes English posts only. The app manifest and service-worker replacement are English, and stale TAWON caches are cleared during activation.
 
-The existing 1,000-word publishing rule is retained as an internal workflow choice, not a claim about Google requirements. English conclusions accept `Next steps`, `Conclusion` or `Takeaway`; Indonesian conclusions still work. Ads require separate provider setup, privacy/consent review and approval. No ranking, CTR or AdSense acceptance is guaranteed.
+The existing 1,000-word publishing rule is retained as an internal workflow choice, not a claim about Google requirements. English conclusions accept `Next steps`, `Conclusion` or `Takeaway`; All dashboard text and validation feedback are in English. Ads require separate provider setup, privacy/consent review and approval. No ranking, CTR or AdSense acceptance is guaranteed.
 
 ## Validation
 
 Completed route/status/metadata checks, publishing validation for all six guides, 390px mobile and desktop visual review, and database verification of language counts. Live article rendering, archive continuity and interactions should also be checked after deployment. Never post production test comments or ratings just to test a control.
+
+## English completion
+
+The public-source translations are in `content/english-translations.json`, and permanent slug mappings are in `server/international/redirects.mjs`. All translations passed structural editorial checks, retained every original source link, and retained the original numeric tokens. The private pre-migration checkpoint is excluded from Git. Public categories and tags have English labels; inactive legacy category slugs redirect to their current section. Preview configuration uses a separate audio rate-limit namespace.

@@ -1,15 +1,15 @@
 {
   "id": "/",
-  "name": "TAWON",
+  "name": "TAWON \u2014 Fresh perspective",
   "short_name": "TAWON",
-  "description": "Berita terkini, kabar daerah, nasional, ekonomi, teknologi, dan inspirasi.",
-  "lang": "id-ID",
+  "description": "Practical guides and clear perspective for everyday life.",
+  "lang": "en",
   "dir": "ltr",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#facc15",
+  "background_color": "#fcfcf8",
+  "theme_color": "#234b3d",
   "categories": [
     "news",
     "magazines"
@@ -30,12 +30,12 @@
   ],
   "shortcuts": [
     {
-      "name": "Berita terbaru",
+      "name": "Discover",
       "url": "/"
     },
     {
-      "name": "Akun saya",
-      "url": "/akun.html"
+      "name": "My TAWON",
+      "url": "/account"
     }
   ]
 }
