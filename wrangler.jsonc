@@ -8,11 +8,7 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
-    "run_worker_first": [
-      "/api/*",
-      "/artikel.html",
-      "/sitemap.xml"
-    ]
+    "run_worker_first": true
   },
   "ratelimits": [
     {

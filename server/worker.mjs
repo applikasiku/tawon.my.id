@@ -1,89 +1,45 @@
+import legacy from './legacy.mjs';
+import adminTemplate from './international/admin.mjs';
+import editorialCode from './international/editorial.mjs';
+import css from './international/styles.mjs';
+import client from './international/client.mjs';
+import {pages,pageAliases} from './international/pages.mjs';
+import {SITE,esc,safeURL,articleURL,categories,home,listing,info,article,account,errorPage} from './international/render.mjs';
 const DATABASE='https://ajqwpbpaozlurqoxysjt.supabase.co';
-const SITE='https://tawon.my.id';
-const escHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const plain=value=>String(value??'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;|&#160;/gi,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/\s+/g,' ').trim();
-const absoluteImage=value=>{try{const u=new URL(value,SITE);return u.protocol==='https:'?u.href:'';}catch{return '';}};
-async function publishedArticle(slug){
- const q=new URL(DATABASE+'/rest/v1/articles');
- q.searchParams.set('select','id,title,slug,excerpt,content,thumbnail_url,published_at,updated_at,meta_title,meta_description,categories(name)');
- q.searchParams.set('slug','eq.'+slug);q.searchParams.set('status','eq.published');q.searchParams.set('published_at','lte.'+new Date().toISOString());q.searchParams.set('limit','1');
- const r=await fetch(q,{headers:{apikey:PUBLIC_KEY,Authorization:'Bearer '+PUBLIC_KEY},signal:AbortSignal.timeout(10000)});
- if(!r.ok)throw Error('article_lookup_'+r.status);const rows=await r.json();return rows[0]||null;
+const KEY='sb_publishable_-XnVkQ5Jgi0ji47eizdS9g_XOY2Ao48';
+const fields='id,title,slug,excerpt,content,thumbnail_url,published_at,updated_at,meta_title,meta_description,language,is_featured,categories(name,slug),profiles(display_name)';
+export async function readBounded(response,max=2500000){if(!response.body)throw Error('empty_response');const reader=response.body.getReader(),chunks=[];let bytes=0;try{while(true){const {done,value}=await reader.read();if(done)break;bytes+=value.byteLength;if(bytes>max){await reader.cancel();throw Error('response_too_large');}chunks.push(value);}}finally{reader.releaseLock();}const data=new Uint8Array(bytes);let at=0;for(const c of chunks){data.set(c,at);at+=c.length;}return new TextDecoder().decode(data);}
+async function articles({language='en',slug,all=false,offset=0,limit=100,metadata=false}={}){const u=new URL(DATABASE+'/rest/v1/articles');u.searchParams.set('select',metadata?'slug,published_at,updated_at,thumbnail_url,language':fields);u.searchParams.set('status','eq.published');u.searchParams.set('published_at','lte.'+new Date().toISOString());u.searchParams.set('order','published_at.desc,id.asc');u.searchParams.set('limit',String(slug?1:limit));if(offset)u.searchParams.set('offset',String(offset));if(slug)u.searchParams.set('slug','eq.'+slug);else if(!all)u.searchParams.set('language','eq.'+language);const r=await fetch(u,{headers:{apikey:KEY,Authorization:'Bearer '+KEY},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('article_query_'+r.status);return JSON.parse(await readBounded(r));}
+const headers=(type,cache='public, max-age=120, s-maxage=300')=>({'Content-Type':type+'; charset=utf-8','Cache-Control':cache,'X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','X-Frame-Options':'SAMEORIGIN'});
+const html=(body,status=200,noindex=false)=>new Response(body,{status,headers:{...headers('text/html',status===200?'public, max-age=60, s-maxage=180':'no-store'),...(noindex?{'X-Robots-Tag':'noindex, follow'}:{})}});
+const redirect=(path)=>new Response(null,{status:301,headers:{Location:path,'Cache-Control':'public,max-age=3600'}});
+const sw=`const CACHE='tawon-international-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const key of await caches.keys()){if(key.startsWith('tawon')&&key!==CACHE)await caches.delete(key);}await self.clients.claim();})()));self.addEventListener('fetch',e=>{if(e.request.mode==='navigate')e.respondWith(fetch(e.request).catch(()=>new Response('<!doctype html><html lang="en"><meta name="viewport" content="width=device-width"><title>Offline | TAWON</title><h1>You are offline.</h1><p>Reconnect to explore TAWON.</p></html>',{headers:{'Content-Type':'text/html'}})));});`;
+function manifest(){return {id:'/',name:'TAWON — Fresh perspective',short_name:'TAWON',description:'Practical guides for a clearer everyday life.',lang:'en',dir:'ltr',start_url:'/?source=pwa',scope:'/',display:'standalone',background_color:'#fcfcf8',theme_color:'#234b3d',categories:['education','lifestyle'],icons:[{src:'/assets/icon-192-v6.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:'/assets/icon-512-v6.png',sizes:'512x512',type:'image/png',purpose:'any'}],shortcuts:[{name:'Discover',url:'/'},{name:'My TAWON',url:'/account'}]};}
+export async function sitemap(){const rows=[];for(let offset=0;offset<10000;offset+=500){const batch=await articles({all:true,metadata:true,limit:500,offset});rows.push(...batch);if(batch.length<500)break;}const paths=['/',...categories.map(([s])=>'/category/'+s),...Object.keys(pages).map(k=>'/info.html?page='+k),'/archive'];const entries=paths.map(p=>'<url><loc>'+esc(SITE+p)+'</loc></url>').concat(rows.map(a=>'<url><loc>'+esc(SITE+articleURL(a))+'</loc>'+(a.updated_at||a.published_at?'<lastmod>'+esc(a.updated_at||a.published_at)+'</lastmod>':'')+'</url>'));return new Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+entries.join('')+'</urlset>',{headers:headers('application/xml')});}
+async function route(request,env,ctx){const u=new URL(request.url),p=u.pathname;
+ if(p.startsWith('/api/'))return legacy.fetch(request,env,ctx);
+ if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405,headers:{Allow:'GET, HEAD'}});
+ if(p==='/international.css')return new Response(css,{headers:headers('text/css','public,max-age=3600')});
+ if(p==='/international.js')return new Response(client,{headers:headers('text/javascript','public,max-age=3600')});
+ if(p==='/manifest.webmanifest')return Response.json(manifest(),{headers:{...headers('application/manifest+json')}});
+ if(p==='/sw.js')return new Response(sw,{headers:headers('text/javascript','no-cache')});
+ if(p==='/robots.txt')return new Response('User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /account\nDisallow: /akun\nDisallow: /search\nDisallow: /content/\nDisallow: /database/\nDisallow: /server/\nSitemap: '+SITE+'/sitemap.xml\n',{headers:headers('text/plain')});
+ if(p==='/sitemap.xml')return sitemap();
+ if(p==='/index.html'||p==='/index')return redirect('/'+u.search);
+ if(p==='/akun.html'||p==='/akun')return redirect('/account'+u.hash);
+ if(p==='/info'||p==='/artikel'||p==='/admin')return redirect(p+'.html'+u.search);
+ if(p==='/editorial-standard.html')return redirect('/info.html?page=editorial');
+ if(p==='/live.html'||p==='/live')return redirect('/');
+ if(p==='/account')return new Response(account(),{headers:{...headers('text/html','no-store'),'X-Robots-Tag':'noindex,follow'}});
+ if(p==='/info.html'){const key=u.searchParams.get('page')||'about';if(pageAliases[key])return redirect('/info.html?page='+pageAliases[key]);const body=info(key);return body?html(body):html(errorPage(404,'Page not found','This page is not available. Explore the publication or contact our team.'),404,true);}
+ if(p==='/artikel.html'){const slug=u.searchParams.get('slug')||'';if(!/^[a-z0-9-]{1,180}$/.test(slug))return html(errorPage(404,'Article not found','The article address is missing or invalid.'),404,true);const rows=await articles({slug});if(!rows.length)return html(errorPage(404,'Article not found','This article is unavailable or has not been published.'),404,true);const related=await articles();return html(await article(rows[0],related.filter(a=>a.id!==rows[0].id)));}
+ if(p==='/feed.xml'){const rows=await articles({limit:30,metadata:false});return new Response('<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>TAWON English edition</title><link>'+SITE+'/</link><description>Fresh perspective. Practical knowledge.</description><language>en</language>'+rows.map(a=>'<item><title>'+esc(a.title)+'</title><link>'+esc(SITE+articleURL(a))+'</link><guid isPermaLink="true">'+esc(SITE+articleURL(a))+'</guid><description>'+esc(a.excerpt)+'</description><pubDate>'+new Date(a.published_at).toUTCString()+'</pubDate></item>').join('')+'</channel></rss>',{headers:headers('application/rss+xml')});}
+ if(p==='/archive'){const rows=await articles({language:'id'});return html(listing(rows,{title:'The Indonesian archive',description:'Our original Indonesian articles, preserved in their original language. For our current English-language guides, explore the main edition.',path:'/archive'}));}
+ if(p==='/'||p==='/search'||p.startsWith('/category/')){let rows=await articles();const q=(u.searchParams.get('q')||'').slice(0,100).trim();if(p==='/search'||q){const needle=q.toLowerCase();rows=needle?rows.filter(a=>(a.title+' '+a.excerpt+' '+(a.categories?.name||'')).toLowerCase().includes(needle)):[];return html(listing(rows,{title:q?'Results for “'+q+'”':'Search TAWON',description:'Find a practical guide, a useful idea or your next good question.',path:'/search'+(q?'?q='+encodeURIComponent(q):''),noindex:true,search:q||' '}),200,true);}if(p==='/')return html(home(rows));const slug=p.slice('/category/'.length);const category=categories.find(c=>c[0]===slug);if(!category)return html(errorPage(404,'Section not found','Explore the available sections in our navigation.'),404,true);return html(listing(rows.filter(a=>a.categories?.slug===slug),{title:category[1],description:category[2],path:p,active:slug}));}
+ if(p==='/offline.html')return html(errorPage(503,'You are offline','Reconnect to continue reading TAWON.'),503,true);
+ if(p==='/admin.html')return new Response(adminTemplate,{headers:{...headers('text/html','no-store'),'X-Robots-Tag':'noindex,nofollow'}});
+ if(p==='/editorial-standard.js')return new Response(editorialCode,{headers:headers('text/javascript','no-cache')});
+ if(p.startsWith('/content/')||p.startsWith('/server/')||p.startsWith('/database/')||/\.(md|sql|jsonc)$/.test(p))return html(errorPage(404,'Page not found','This resource is not part of the public publication.'),404,true);
+ const asset=await env.ASSETS.fetch(request);if(asset.status===404)return html(errorPage(404,'Page not found','This address is unavailable. Explore the latest guides instead.'),404,true);return asset;
 }
-function metaTag(name,content,property=false){return '<meta '+(property?'property':'name')+'="'+name+'" content="'+escHtml(content)+'">';}
-async function articleHtml(request,env){
- const asset=await env.ASSETS.fetch(request);if(!asset.ok)return asset;
- const url=new URL(request.url),slug=url.searchParams.get('slug');if(!slug||!/^[a-z0-9-]{1,180}$/.test(slug))return asset;
- let article;try{article=await publishedArticle(slug);}catch(error){console.warn('seo_article_lookup_failed',error.message);return new Response('Artikel sementara tidak dapat dimuat.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8','X-Robots-Tag':'noindex','Retry-After':'60','Cache-Control':'no-store'}});}if(!article)return new Response('<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><title>Artikel tidak ditemukan | TAWON.MY.ID</title></head><body><main><h1>Artikel tidak ditemukan</h1><p>Artikel mungkin telah dihapus atau belum dipublikasikan.</p><a href="/">Kembali ke beranda</a></main></body></html>',{status:404,headers:{'Content-Type':'text/html; charset=utf-8','X-Robots-Tag':'noindex, follow','Cache-Control':'no-store'}});
- const title=String(article.meta_title||article.title||'TAWON.MY.ID').slice(0,180);
- const description=plain(article.meta_description||article.excerpt||article.content).slice(0,300)||title;
- const image=absoluteImage(article.thumbnail_url)||SITE+'/assets/icon-512-v6.png';
- const canonical=SITE+'/artikel.html?slug='+encodeURIComponent(article.slug),category=article.categories?.name||'Berita';
- let html=await asset.text();
- const bodyText=plain(article.content||'');
- const excerpt=plain(article.excerpt||article.meta_description||'');
- const bodyHtml=bodyText?'<div class="content"><p>'+escHtml(bodyText)+'</p></div>':'';
- const coverHtml=absoluteImage(article.thumbnail_url)?'<img class="cover" src="'+escHtml(absoluteImage(article.thumbnail_url))+'" alt="'+escHtml(title)+'" width="1200" height="675">':'';
- const serverArticle='<article class="seo-server-article"><div class="category">'+escHtml(category)+'</div><h1 class="title">'+escHtml(title)+'</h1><p class="muted">TAWON.MY.ID · '+escHtml(article.published_at||'')+'</p>'+coverHtml+(excerpt?'<p class="lead">'+escHtml(excerpt)+'</p>':'')+bodyHtml+'</article>';
- html=html.replace('<main id="article"><div class="status">Memuat artikel…</div></main>','<main id="article">'+serverArticle+'</main>');
- html=html.replace(/<title>[\s\S]*?<\/title>/i,'');
- html=html.replace(/<meta\s+(?:name|property)=["'](?:description|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi,'');
- html=html.replace(/<link\s+rel=["']canonical["'][^>]*>/gi,'');
- const tags=['<title>'+escHtml(title)+' | TAWON.MY.ID</title>',metaTag('description',description),metaTag('robots','index,follow,max-image-preview:large'),'<link rel="canonical" href="'+escHtml(canonical)+'">',metaTag('og:site_name','TAWON.MY.ID',true),metaTag('og:type','article',true),metaTag('og:locale','id_ID',true),metaTag('og:title',title,true),metaTag('og:description',description,true),metaTag('og:url',canonical,true),metaTag('og:image',image,true),metaTag('og:image:secure_url',image,true),metaTag('og:image:width','1200',true),metaTag('og:image:height','630',true),metaTag('og:image:alt',title,true),metaTag('twitter:card','summary_large_image'),metaTag('twitter:title',title),metaTag('twitter:description',description),metaTag('twitter:image',image),metaTag('article:published_time',article.published_at||'',true),metaTag('article:modified_time',article.updated_at||article.published_at||'',true),'<script type="application/ld+json">'+JSON.stringify({'@context':'https://schema.org','@type':'NewsArticle','mainEntityOfPage':{'@type':'WebPage','@id':canonical},headline:title,description,image:[image],datePublished:article.published_at,dateModified:article.updated_at||article.published_at,articleSection:category,inLanguage:'id-ID',author:{'@type':'Organization',name:'TAWON.MY.ID'},publisher:{'@type':'Organization',name:'TAWON.MY.ID',logo:{'@type':'ImageObject',url:SITE+'/assets/icon-512-v6.png'}}})+'</script>'].join('');
- html=html.replace(/<head[^>]*>/i,match=>match+tags);
- const headers=new Headers(asset.headers);headers.set('Content-Type','text/html; charset=utf-8');headers.set('Cache-Control','public, max-age=300, s-maxage=900');headers.set('X-Robots-Tag','index,follow');
- return new Response(html,{status:asset.status,headers});
-}
-async function sitemapResponse(){
- const now=new Date().toISOString(),all=[];let offset=0;
- while(offset<5000){const q=new URL(DATABASE+'/rest/v1/articles');q.searchParams.set('select','slug,published_at,updated_at,thumbnail_url');q.searchParams.set('status','eq.published');q.searchParams.set('published_at','lte.'+now);q.searchParams.set('order','published_at.desc');q.searchParams.set('limit','500');q.searchParams.set('offset',String(offset));
- const r=await fetch(q,{headers:{apikey:PUBLIC_KEY,Authorization:'Bearer '+PUBLIC_KEY},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('sitemap_query_'+r.status);
- const rows=await r.json();all.push(...rows);if(rows.length<500)break;offset+=rows.length;}
- const urls=[{loc:SITE+'/',lastmod:new Date().toISOString().slice(0,10)},...all.map(a=>({loc:SITE+'/artikel.html?slug='+encodeURIComponent(a.slug),lastmod:(a.updated_at||a.published_at||'').slice(0,10),image:absoluteImage(a.thumbnail_url)}))];
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n'+urls.map(x=>'  <url><loc>'+escHtml(x.loc)+'</loc>'+(x.lastmod?'<lastmod>'+x.lastmod+'</lastmod>':'')+(x.image?'<image:image><image:loc>'+escHtml(x.image)+'</image:loc></image:image>':'')+'</url>').join('\n')+'\n</urlset>';
- return new Response(xml,{headers:{'Content-Type':'application/xml; charset=utf-8','Cache-Control':'public, max-age=300, s-maxage=900','X-Content-Type-Options':'nosniff'}});
-}
-const PUBLIC_KEY='sb_publishable_-XnVkQ5Jgi0ji47eizdS9g_XOY2Ao48';
-const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
-export function speechText(article){
- const source=String(article.content||'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'');
- return (article.title+'. '+source.replace(/<\/(?:p|h[1-6]|li)>/gi,'. ').replace(/<[^>]+>/g,' ').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/^#{1,6}\s+/gm,'').replace(/&nbsp;|&#160;/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/\s+/g,' ')).trim();
-}
-async function readBounded(response,max){
- if(!response.body)throw Error('empty_body');const reader=response.body.getReader();let bytes=0;const chunks=[];
- try{while(true){const {value,done}=await reader.read();if(done)break;bytes+=value.byteLength;if(bytes>max){await reader.cancel();throw Error('body_too_large');}chunks.push(value);}}finally{reader.releaseLock();}
- const result=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){result.set(chunk,offset);offset+=chunk.length;}return new TextDecoder().decode(result);
-}
-export default {
- async fetch(request,env,ctx){
-  const url=new URL(request.url);
-  if(url.pathname==='/artikel.html'&&request.method==='GET')return articleHtml(request,env);
-  if(url.pathname==='/sitemap.xml'&&request.method==='GET'){try{return await sitemapResponse();}catch(error){console.warn('sitemap_generation_failed',error.message);return new Response('Sitemap sementara tidak tersedia.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}}
-  if(!url.pathname.startsWith('/api/'))return env.ASSETS.fetch(request);
-  if(url.pathname!=='/api/audio')return json({message:'Layanan tidak ditemukan.'},404);
-  if(request.method!=='POST')return json({message:'Gunakan tombol Putar pada artikel.'},405);
-  const origin=request.headers.get('Origin');if(!origin||origin!==url.origin)return json({message:'Permintaan audio harus berasal dari TAWON.'},403);
-  if(!env.ELEVENLABS_API_KEY||!env.ELEVENLABS_VOICE_ID)return json({code:'audio_not_configured',message:'Audio ElevenLabs belum diaktifkan oleh redaksi.'},503);
-  const limiter=env.AUDIO_RATE_LIMIT;if(!limiter)return json({message:'Audio belum siap.'},503);
-  if(!(await limiter.limit({key:'audio:'+request.headers.get('CF-Connecting-IP')})).success)return json({message:'Terlalu banyak permintaan audio. Coba lagi sebentar.'},429);
-  try{
-   let input;try{input=JSON.parse(await readBounded(request,2048));}catch{return json({message:'Permintaan audio tidak valid.'},400);}
-   if(typeof input.slug!=='string'||!/^[a-z0-9-]{1,180}$/.test(input.slug))return json({message:'Artikel tidak valid.'},400);
-   const query=new URL(DATABASE+'/rest/v1/articles');query.searchParams.set('select','title,content,updated_at');query.searchParams.set('slug','eq.'+input.slug);query.searchParams.set('status','eq.published');query.searchParams.set('published_at','lte.'+new Date().toISOString());query.searchParams.set('limit','1');
-   const articleResponse=await fetch(query,{headers:{apikey:PUBLIC_KEY,Authorization:'Bearer '+PUBLIC_KEY},signal:AbortSignal.timeout(10000)});
-   if(!articleResponse.ok)return json({message:'Artikel belum dapat dimuat.'},502);
-   const rows=JSON.parse(await readBounded(articleResponse,300000));if(!rows.length)return json({message:'Artikel tidak ditemukan.'},404);
-   const text=speechText(rows[0]);if(text.length>35000)return json({message:'Artikel ini memerlukan pemrosesan audio terpisah.'},422);
-   const voice=env.ELEVENLABS_VOICE_ID;if(!/^[a-zA-Z0-9_-]{8,120}$/.test(voice))return json({message:'Konfigurasi suara belum valid.'},503);
-   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(voice+'|flash25|'+text)))).map(b=>b.toString(16).padStart(2,'0')).join('');
-   const cacheKey=new Request(url.origin+'/__audio-cache/'+hash);
-   const cached=await caches.default.match(cacheKey);if(cached)return cached;
-   if(!(await limiter.limit({key:'generation-budget'})).success)return json({message:'Pembuatan audio sedang penuh. Silakan coba lagi.'},429);
-   const upstream=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voice)+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':env.ELEVENLABS_API_KEY,'Content-Type':'application/json',Accept:'audio/mpeg'},body:JSON.stringify({text,model_id:'eleven_flash_v2_5',language_code:'id',voice_settings:{stability:0.65,similarity_boost:0.75,style:0,use_speaker_boost:true,speed:0.94}}),signal:AbortSignal.timeout(90000)});
-   if(!upstream.ok){console.warn(JSON.stringify({event:'elevenlabs_error',status:upstream.status}));await upstream.body?.cancel();return json({message:upstream.status===401?'Layanan audio belum dapat diakses.':'Audio belum dapat dibuat. Silakan coba lagi nanti.'},502);}
-   const type=upstream.headers.get('Content-Type')||'';if(!type.startsWith('audio/')){await upstream.body?.cancel();return json({message:'Format audio belum tersedia.'},502);}
-   const response=new Response(upstream.body,{headers:{'Content-Type':'audio/mpeg','Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff','X-Audio-Provider':'ElevenLabs'}});
-   ctx.waitUntil(caches.default.put(cacheKey,response.clone()).catch(()=>{}));return response;
-  }catch(error){console.warn(JSON.stringify({event:'article_audio_failed',type:error.name}));return json({message:'Audio belum dapat dimuat. Silakan coba lagi.'},502);}
- }
-};
+export default {async fetch(request,env,ctx){try{const u=new URL(request.url);const cacheable=request.method==='GET'&&!u.searchParams.has('q')&&(u.pathname==='/'||u.pathname==='/artikel.html'||u.pathname==='/info.html'||u.pathname==='/archive'||u.pathname==='/sitemap.xml'||u.pathname==='/feed.xml'||u.pathname.startsWith('/category/'));let cacheKey;if(cacheable&&typeof caches!=='undefined'){cacheKey=new Request(u.origin+u.pathname+u.search+(u.search?'&':'?')+'__edition=international-v1');const cached=await caches.default.match(cacheKey);if(cached)return cached;}const response=await route(request,env,ctx);if(cacheKey&&response.status===200)ctx.waitUntil(caches.default.put(cacheKey,response.clone()).catch(e=>console.warn('cache_write_failed',e.name)));if(request.method==='HEAD')return new Response(null,response);return response;}catch(error){console.error(JSON.stringify({event:'international_request_failed',path:new URL(request.url).pathname,error:error.message}));return html(errorPage(503,'A short pause','This page could not be loaded. Please try again shortly.'),503,true);}}};
