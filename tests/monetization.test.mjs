@@ -7,11 +7,13 @@ test('unconfigured or invalid publisher never authorizes a seller or injects mar
   const env={ADSENSE_PUBLISHER_ID:value};assert.equal(publisherID(env),'');assert.equal(verificationMeta(env),'');const r=adsText(env);assert.equal(r.status,404);assert.ok(!(await r.text()).includes('DIRECT'));
  }
 });
-test('valid publisher creates matching verification and ads.txt without activating ads',async()=>{
+test('valid publisher creates matching verification and ads.txt and the requested async loader',async()=>{
  for(const value of ['pub-1234567890123456','ca-pub-1234567890123456']){
-  const env={ADSENSE_PUBLISHER_ID:value};assert.equal(publisherID(env),'pub-1234567890123456');assert.equal(verificationMeta(env),'<meta name="google-adsense-account" content="ca-pub-1234567890123456">');const r=adsText(env);assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/^text\/plain/);assert.equal(await r.text(),'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n');assert.ok(!verificationMeta(env).includes('<script'));
+  const env={ADSENSE_PUBLISHER_ID:value};assert.equal(publisherID(env),'pub-1234567890123456');assert.ok(verificationMeta(env).includes('client=ca-pub-1234567890123456'));assert.match(verificationMeta(env),/<script async /);assert.match(verificationMeta(env),/crossorigin="anonymous"/);const r=adsText(env);assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/^text\/plain/);assert.equal(await r.text(),'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n');assert.equal((verificationMeta(env).match(/<script /g)||[]).length,1);
  }
 });
 test('privacy provides actionable advertising choices and honest activation status',()=>{
- for(const value of ['prior visits','myadcenter.google.com','optout.aboutads.info','policies.google.com/technologies/partner-sites','does not activate advertising scripts'])assert.ok(pages.privacy.body.includes(value));
+ for(const value of ['prior visits','myadcenter.google.com','optout.aboutads.info','policies.google.com/technologies/partner-sites','TAWON integrates the Google AdSense loader'])assert.ok(pages.privacy.body.includes(value));
 });
+
+test('owner supplied publisher is the deployment default', async()=>{assert.equal(publisherID({}),'pub-7887361220699801');assert.ok(verificationMeta({}).includes('client=ca-pub-7887361220699801'));assert.equal(await adsText({}).text(),'google.com, pub-7887361220699801, DIRECT, f08c47fec0942fa0\n');});
