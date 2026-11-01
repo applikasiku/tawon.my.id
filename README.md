@@ -39,3 +39,15 @@ Completed route/status/metadata checks, publishing validation for all six guides
 ## English completion
 
 The public-source translations are in `content/english-translations.json`, and permanent slug mappings are in `server/international/redirects.mjs`. All translations passed structural editorial checks, retained every original source link, and retained the original numeric tokens. The private pre-migration checkpoint is excluded from Git. Public categories and tags have English labels; inactive legacy category slugs redirect to their current section. Preview configuration uses a separate audio rate-limit namespace.
+
+## AdSense preparation (1 November 2026)
+
+Privacy disclosures now explain conditional Google advertising, third-party cookies, provider processing and links to Google My Ad Center and YourAdChoices. No advertising scripts or simulated consent banner are activated by this release.
+
+Set the existing Worker's non-secret `ADSENSE_PUBLISHER_ID` variable to your actual `ca-pub-` or `pub-` ID followed by 16 digits. `server/international/monetization.mjs` validates the value, supplies the matching account verification meta tag on public HTML and serves the authorized seller declaration at `/ads.txt`. Without a valid ID, `/ads.txt` returns a plain-text 404 and no seller authorization. Never replace this with a guessed or example account ID.
+
+Before serving personalized ads in the EEA, UK or Switzerland, configure a Google-certified CMP through AdSense Privacy & messaging or another certified provider. Confirm the actual consent flow, vendor list and withdrawal controls before adding an ad loader; this release only prepares verification and does not claim consent integration is complete. AdSense account review and Search Console inspection remain external account steps.
+
+Editorial repairs update the community-meeting summary and place its dated traffic example after the meeting guidance, clarify the difference between the garden planning and growing-system guides, add a growing-system comparison, and repair malformed list markup. Published URLs and publication dates are retained. Matching content-source records are updated alongside the database.
+
+Validation: `node --test tests/monetization.test.mjs`; syntax-check changed Worker modules with `node --check`. The source requires deployment to the existing `tawon-my-id` Worker while retaining its current assets, bindings, secrets and routes.
