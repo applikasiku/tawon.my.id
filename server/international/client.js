@@ -10,6 +10,7 @@ let opener;$$('[data-open]').forEach(b=>b.addEventListener('click',()=>{opener=b
 // A new service-worker version clears stale pre-redesign HTML caches.
 if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 let installPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;if(!storage.get('tawon-install-dismissed-v2',false))$('#installBanner').hidden=false;});$('#dismissInstall')?.addEventListener('click',()=>{$('#installBanner').hidden=true;storage.set('tawon-install-dismissed-v2',true);});$('#installApp')?.addEventListener('click',async()=>{if(!installPrompt)return;await installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('#installBanner').hidden=true;});window.addEventListener('appinstalled',()=>{$('#installBanner').hidden=true;});
+const menuShare=$('#tawonNativeShare');if(menuShare)menuShare.addEventListener('click',async()=>{const url='https://tawon.my.id/';try{if(navigator.share)await navigator.share({title:'TAWON',url});else if(navigator.clipboard){await navigator.clipboard.writeText(url);say('Link copied.');}else window.prompt('Copy this link',url);}catch(e){if(e.name!=='AbortError')window.prompt('Copy this link',url);}});
 const a=$('[data-article-id]');
 if(a){
  const id=a.dataset.articleId,slug=a.dataset.slug,title=a.dataset.title,url='/article/'+encodeURIComponent(slug);
