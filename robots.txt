@@ -1,9 +1,12 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /admin.html
+Disallow: /admin/
 Disallow: /account
 Disallow: /akun
 Disallow: /search
+Disallow: /search?
 Disallow: /content/
 Disallow: /database/
 Disallow: /server/
