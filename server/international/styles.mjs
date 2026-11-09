@@ -31,4 +31,23 @@ export default `
 #menuDialog .tawon-menu-credit strong,#menuDialog .tawon-menu-credit span{display:block}
 @media(max-width:390px){#menuDialog .tawon-share-grid{gap:5px}#menuDialog .tawon-share-grid a,#menuDialog .tawon-share-grid button{height:42px;min-height:42px;border-radius:9px}#menuDialog .tawon-share-grid i{font-size:18px}}
 
+/* Slide-in Explore TAWON drawer, replacing centered modal */
+#menuDialog.dialog{position:fixed!important;inset:0 0 0 auto!important;margin:0!important;box-sizing:border-box!important;width:min(420px,92vw)!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;padding:24px 20px 22px!important;border:0!important;border-left:1px solid #dce5dc!important;border-radius:18px 0 0 18px!important;background:#fffefa!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;box-shadow:-14px 0 40px #0d271b2b;transform:translateX(105%);opacity:1;transition:transform .3s cubic-bezier(.2,.8,.2,1);scrollbar-width:thin}
+#menuDialog.dialog[open]{transform:translateX(0)}
+#menuDialog.dialog::backdrop{background:rgba(8,26,18,.53)}
+#menuDialog .dialog-top{position:sticky;top:-24px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-24px -20px 18px;padding:24px 20px 15px;background:#fffefa;border-bottom:1px solid #e7ece6}
+#menuDialog .dialog-top h2{font-size:clamp(22px,5vw,28px);letter-spacing:-.6px}
+#menuDialog .tawon-menu-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin:0!important}
+#menuDialog .tawon-menu-grid a{display:flex!important;align-items:center!important;justify-content:flex-start;gap:9px!important;min-height:53px!important;padding:10px!important;min-width:0!important;width:100%!important;box-sizing:border-box!important;border-radius:12px!important;font-size:13px!important;line-height:1.3!important}
+#menuDialog .tawon-menu-grid a i{flex:0 0 19px!important;width:19px!important;min-width:19px!important;font-size:16px!important;text-align:center!important}
+#menuDialog .tawon-menu-grid a span{min-width:0;overflow-wrap:break-word}
+#menuDialog .tawon-menu-share{margin-top:20px!important;padding-top:16px!important}
+#menuDialog .tawon-share-grid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:6px!important;margin-top:12px!important}
+#menuDialog .tawon-share-grid a,#menuDialog .tawon-share-grid button{display:flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;min-height:43px!important;height:43px!important;padding:0!important;border-radius:10px!important}
+#menuDialog .tawon-share-grid i{font-size:18px!important}
+#menuDialog .tawon-menu-credit{display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;margin-top:19px!important;padding-top:16px!important;text-align:center!important;font-size:11px!important}
+#menuDialog .tawon-menu-credit div{display:flex!important;flex-wrap:wrap;justify-content:center;gap:5px}
+@media(max-width:360px){#menuDialog.dialog{width:95vw!important;padding:20px 14px!important}#menuDialog .dialog-top{margin:-20px -14px 15px;padding:20px 14px 12px}#menuDialog .tawon-menu-grid a{font-size:12px!important;padding:8px!important;gap:6px!important}}
+@media(prefers-reduced-motion:reduce){#menuDialog.dialog{transition:none}}
+
 `;
