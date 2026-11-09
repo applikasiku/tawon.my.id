@@ -38,3 +38,15 @@ if($('#savedArticles')){
  $('#signOut').addEventListener('click',async()=>{const {error}=await db.auth.signOut();if(error){status.textContent='Could not sign out. Please try again.';return;}await refresh();status.textContent='You are signed out.';});$('#resetPassword').addEventListener('click',async()=>{const email=$('#authForm').elements.email.value.trim();if(!email){status.textContent='Enter your email address first.';return;}const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/account'});status.textContent=error?error.message:'If an account exists for that address, check your inbox for the reset link.';});$('#recoveryForm').addEventListener('submit',async e=>{e.preventDefault();const {error}=await db.auth.updateUser({password:new FormData(e.currentTarget).get('new_password')});status.textContent=error?error.message:'Password updated.';if(!error)e.currentTarget.hidden=true;});
  }catch{$('#authStatus').textContent='Account services are temporarily unavailable. Please reload to try again.';}})();
 }
+
+
+/* First-party analytics: anonymous rotating IDs; no IP addresses or cookies stored. */
+(function(){
+ const path=location.pathname;if(!(/^\/$|^\/articles$|^\/category\/[a-z0-9-]+$|^\/article\/[a-z0-9-]+$/.test(path)))return;
+ if(navigator.globalPrivacyControl||navigator.doNotTrack==='1')return;
+ const rand=()=>{const a=new Uint8Array(18);crypto.getRandomValues(a);return Array.from(a,x=>x.toString(16).padStart(2,'0')).join('')};
+ const day=new Date().toISOString().slice(0,10);let visitor,session;try{const v=JSON.parse(localStorage.getItem('tawon-visitor-analytics')||'null');visitor=v?.day===day&&/^[a-f0-9]{36}$/.test(v.id)?v.id:rand();localStorage.setItem('tawon-visitor-analytics',JSON.stringify({day,id:visitor}));const key='tawon-session-analytics';const ss=JSON.parse(sessionStorage.getItem(key)||'null');session=ss?.id&&Date.now()-ss.last<30*60*1000?ss.id:rand();sessionStorage.setItem(key,JSON.stringify({id:session,last:Date.now()}))}catch{visitor=rand();session=rand()}
+ const send=event=>{const payload=JSON.stringify({event,path,visitor,session,referrer:document.referrer});try{if(navigator.sendBeacon){navigator.sendBeacon('/metrics',new Blob([payload],{type:'application/json'}));}else fetch('/metrics',{method:'POST',headers:{'Content-Type':'application/json'},body:payload,keepalive:true}).catch(()=>{});}catch{}};
+ send('pageview');
+ if(path.startsWith('/article/')){let timer;const onVisible=()=>{if(document.visibilityState==='visible'){timer=setTimeout(()=>send('read'),30000)}else clearTimeout(timer)};document.addEventListener('visibilitychange',onVisible);onVisible();}
+})();
