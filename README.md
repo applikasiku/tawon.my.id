@@ -6,7 +6,7 @@ TAWON is an English-language practical publication at https://tawon.my.id, hoste
 
 The Worker renders home, category, article, information, search and account shells on the server. English discovery sections are Technology, Business, Learning, Living and Sustainability. Published English articles are selected by `articles.language = 'en'`. All published articles now use `language = 'en'`; new CMS articles default to English. There is no geographic redirection or fabricated `hreflang` pairing. Canonical article URLs use `/article/<english-slug>`; old `/artikel.html?slug=...` links remain compatible through permanent redirects.
 
-Article interactions include device-only bookmarks, sharing, text size, reactions, public comments, account-based ratings and ElevenLabs audio when configured. Account credentials remain in Supabase Auth, with authorization enforced by existing database RLS. The redesign does not activate ads or analytics.
+Article interactions include device-only bookmarks, sharing, text size, reactions, public comments, account-based ratings and ElevenLabs audio when configured. Account credentials remain in Supabase Auth, with authorization enforced by existing database RLS. The site does not render ad units or activate analytics by default.
 
 ## Source and deployment
 
@@ -42,11 +42,11 @@ The public-source translations are in `content/english-translations.json`, and p
 
 ## AdSense preparation (1 November 2026)
 
-Privacy disclosures now explain conditional Google advertising, third-party cookies, provider processing and links to Google My Ad Center and YourAdChoices. No advertising scripts or simulated consent banner are activated by this release.
+Privacy disclosures now explain conditional Google advertising, third-party cookies, provider processing and links to Google My Ad Center and YourAdChoices. When a valid publisher ID is configured, the AdSense account-verification meta tag and asynchronous loader are added to indexable public HTML. This verifies the site; it does not create ad units or guarantee that ads will be served. No simulated consent banner is used.
 
-Set the existing Worker's non-secret `ADSENSE_PUBLISHER_ID` variable to your actual `ca-pub-` or `pub-` ID followed by 16 digits. `server/international/monetization.mjs` validates the value, supplies the matching account verification meta tag on public HTML and serves the authorized seller declaration at `/ads.txt`. Without a valid ID, `/ads.txt` returns a plain-text 404 and no seller authorization. Never replace this with a guessed or example account ID.
+Set the existing Worker's non-secret `ADSENSE_PUBLISHER_ID` variable to the site owner's actual `ca-pub-` or `pub-` ID followed by 16 digits. The current TAWON publisher ID supplied by the owner is `ca-pub-7887361220699801`. `server/international/monetization.mjs` validates the value, supplies the matching account verification meta tag and asynchronous verification loader on indexable public HTML, and serves the authorized seller declaration at `/ads.txt`. The loader is for site verification only; this release does not create ad units. Without a valid Worker variable, no AdSense markup is injected and `/ads.txt` returns a plain-text 404. Never use a hard-coded fallback or guessed publisher ID.
 
-Before serving personalized ads in the EEA, UK or Switzerland, configure a Google-certified CMP through AdSense Privacy & messaging or another certified provider. Confirm the actual consent flow, vendor list and withdrawal controls before adding an ad loader; this release only prepares verification and does not claim consent integration is complete. AdSense account review and Search Console inspection remain external account steps.
+While the site is under review, keep the verification loader in place but do not add ad units or enable ad serving. After approval, configure a Google-certified CMP through AdSense Privacy & messaging or another certified provider before serving personalized ads in the EEA, UK or Switzerland. Confirm the actual consent flow, vendor list and withdrawal controls. AdSense approval and Search Console inspection remain external account steps.
 
 Editorial repairs update the community-meeting summary and place its dated traffic example after the meeting guidance, clarify the difference between the garden planning and growing-system guides, add a growing-system comparison, and repair malformed list markup. Published URLs and publication dates are retained. Matching content-source records are updated alongside the database.
 
