@@ -1,10 +1,11 @@
 // Publisher supplied by the site owner. Keep this ID consistent with ads.txt.
 export function publisherID(env = {}) {
-  const raw = String(env.ADSENSE_PUBLISHER_ID ?? 'ca-pub-7887361220699801').trim();
+  const raw = String(env.ADSENSE_PUBLISHER_ID ?? '').trim();
   return /^(?:ca-)?pub-[0-9]{16}$/.test(raw) ? raw.replace(/^ca-/, '') : '';
 }
 export function verificationMeta(env) {
   const id = publisherID(env);
+  // The loader is used for AdSense site verification. It does not create ad slots.
   return id ? `<meta name="google-adsense-account" content="ca-${id}"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${id}" crossorigin="anonymous"></script>` : '';
 }
 export function adsText(env) {
